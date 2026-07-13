@@ -17,7 +17,7 @@ function stubFetch(igdbResponse: {
   status?: number;
   body?: unknown;
 }) {
-  const fetchMock = vi.fn(async (url: string, _options?: RequestInit) => {
+  const fetchMock = vi.fn(async (url: string) => {
     if (String(url).includes("id.twitch.tv")) {
       return {
         ok: true,
@@ -45,7 +45,7 @@ describe("igdbQuery", () => {
       String(u).includes("api.igdb.com"),
     );
     expect(igdbCall).toBeDefined();
-    const [url, options] = igdbCall as [string, RequestInit];
+    const [url, options] = igdbCall as unknown as [string, RequestInit];
     expect(url).toBe("https://api.igdb.com/v4/games");
     expect(options.method).toBe("POST");
     const headers = options.headers as Record<string, string>;

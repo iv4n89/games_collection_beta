@@ -138,9 +138,8 @@ model UserItem {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   itemType ItemType
 
-  // Referencia polimórfica al ítem de catálogo (ver data-model.md).
-  catalogRefType String
-  catalogRefId   String
+  // Referencia al ítem de catálogo (el tipo es itemType; ver data-model.md).
+  catalogRefId String
 
   ownership Ownership @default(owned)
 
@@ -166,8 +165,8 @@ model UserItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId])
-  @@index([catalogRefType, catalogRefId])
+  @@unique([userId, itemType, catalogRefId])
+  @@index([itemType, catalogRefId])
 }
 
 model PriceObservation {

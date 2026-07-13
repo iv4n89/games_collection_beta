@@ -1,0 +1,186 @@
+// Esquema inicial. Ver .claude/rules/data-model.md para el modelo de dominio.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth.js (cuentas de usuario) ---
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  items         UserItem[]
+  createdAt     DateTime   @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Catálogo (compartido, cacheado desde IGDB o manual) ---
+
+enum ItemSource {
+  igdb
+  manual
+}
+
+model Platform {
+  id          String      @id @default(cuid())
+  igdbId      Int?        @unique
+  name        String
+  slug        String      @unique
+  generation  Int?
+  imageUrl    String?
+  source      ItemSource  @default(igdb)
+  games       Game[]
+  accessories Accessory[]
+}
+
+model Game {
+  id          String      @id @default(cuid())
+  igdbId      Int?
+  name        String
+  slug        String
+  platformId  String
+  platform    Platform    @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  coverUrl    String?
+  releaseDate DateTime?
+  summary     String?
+  source      ItemSource  @default(igdb)
+
+  @@unique([igdbId, platformId])
+  @@index([platformId])
+}
+
+model Accessory {
+  id         String     @id @default(cuid())
+  name       String
+  platformId String?
+  platform   Platform?  @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  imageUrl   String?
+  source     ItemSource @default(manual)
+}
+
+enum SpecialEditionBase {
+  game
+  platform
+  accessory
+}
+
+model SpecialEdition {
+  id       String             @id @default(cuid())
+  baseType SpecialEditionBase
+  baseId   String
+  name     String
+  imageUrl String?
+  notes    String?
+
+  @@index([baseType, baseId])
+}
+
+// --- Colección del usuario ---
+
+enum ItemType {
+  game
+  platform
+  accessory
+  special_edition
+}
+
+enum Ownership {
+  owned
+  wishlist
+}
+
+model UserItem {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType ItemType
+
+  // Referencia polimórfica al ítem de catálogo (ver data-model.md).
+  catalogRefType String
+  catalogRefId   String
+
+  ownership Ownership @default(owned)
+
+  // Flags de completitud (aplicables según itemType).
+  hasGame       Boolean?
+  hasBox        Boolean?
+  hasManual     Boolean?
+  hasConsole    Boolean?
+  hasController Boolean?
+  hasCables     Boolean?
+  hasAccessory  Boolean?
+
+  condition       String?
+  notes           String?
+  acquisitionPrice Decimal?
+  acquisitionDate  DateTime?
+
+  // Solo wishlist: umbral para alertas de precio.
+  desiredMaxPrice Decimal?
+
+  priceObservations PriceObservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([catalogRefType, catalogRefId])
+}
+
+model PriceObservation {
+  id           String   @id @default(cuid())
+  userItemId   String
+  userItem     UserItem @relation(fields: [userItemId], references: [id], onDelete: Cascade)
+  source       String
+  price        Decimal
+  currency     String
+  url          String
+  condition    String?
+  availability String?
+  seenAt       DateTime @default(now())
+
+  @@index([userItemId, seenAt])
+}

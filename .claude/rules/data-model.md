@@ -19,14 +19,17 @@
 - **`UserItem`**:
   - `userId`
   - `itemType`: `game | platform | accessory | special_edition`
-  - `catalogRefType`, `catalogRefId`: puntero al ítem de catálogo
+  - `catalogRefId`: id del ítem de catálogo (su tipo es `itemType`)
   - `ownership`: `owned | wishlist`
   - flags de completitud (según `itemType`, ver abajo)
   - `condition?`, `notes?`, `acquisitionPrice?`, `acquisitionDate?`
   - `desiredMaxPrice?`: solo para `wishlist`
 
+Único por `(userId, itemType, catalogRefId)`: un usuario tiene una sola relación
+por ítem de catálogo. Añadir es un `upsert` sobre esa clave.
+
 La **wishlist es un estado** (`ownership = wishlist`), no una tabla aparte. Pasar
-de deseado a poseído = cambiar el estado, no mover de tabla.
+de deseado a poseído = cambiar el estado (mismo `upsert`), no mover de tabla.
 
 ## Completitud por componentes
 

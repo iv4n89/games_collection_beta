@@ -12,6 +12,9 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     globalSetup: ["./test/global-setup.ts"],
+    // Los tests de integración comparten una única DB; ejecutar los archivos en
+    // serie evita que se pisen entre ellos.
+    fileParallelism: false,
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
     },

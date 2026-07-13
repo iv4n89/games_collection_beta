@@ -1,12 +1,12 @@
 import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 
-// Los providers concretos (GitHub, email, etc.) se añaden en su propio spec de
-// autenticación. El scaffold deja la infraestructura lista: adapter Prisma,
-// modelos de cuenta y route handler.
+// GitHub lee AUTH_GITHUB_ID / AUTH_GITHUB_SECRET del entorno por convención de
+// Auth.js. Sesión por base de datos (por defecto con el adapter Prisma).
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true,
-  providers: [],
+  providers: [GitHub],
 });

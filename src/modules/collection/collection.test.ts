@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { addItem } from "./add";
-import { getPlatformCollection } from "./list";
+import { getPlatformCollection, getUserPlatforms } from "./list";
 
 function createUser(name: string) {
   return prisma.user.create({ data: { name } });
@@ -181,5 +181,48 @@ describe("getPlatformCollection", () => {
 
     expect(result.console).toBeNull();
     expect(result.games).toEqual([]);
+  });
+});
+
+describe("getUserPlatforms", () => {
+  it("returns the user's console items enriched, excluding games and other users", async () => {
+    const user = await createUser("ivan");
+    const other = await createUser("otro");
+    const wiiu = await createPlatform(41, "Wii U", "wiiu");
+    const nswitch = await createPlatform(130, "Switch", "switch");
+    const game = await createGame(wiiu.id, 7346, "Breath of the Wild", "botw");
+
+    await addItem(user.id, {
+      itemType: "platform",
+      catalogRefId: nswitch.id,
+      ownership: "owned",
+      components: { hasConsole: true },
+    });
+    await addItem(user.id, {
+      itemType: "platform",
+      catalogRefId: wiiu.id,
+      ownership: "wishlist",
+    });
+    await addItem(user.id, {
+      itemType: "game",
+      catalogRefId: game.id,
+      ownership: "owned",
+    });
+    await addItem(other.id, {
+      itemType: "platform",
+      catalogRefId: wiiu.id,
+      ownership: "owned",
+    });
+
+    const result = await getUserPlatforms(user.id);
+
+    expect(result.map((entry) => entry.platform.name)).toEqual([
+      "Switch",
+      "Wii U",
+    ]);
+    expect(result.map((entry) => entry.item.ownership)).toEqual([
+      "owned",
+      "wishlist",
+    ]);
   });
 });

@@ -2,6 +2,10 @@ import { prisma } from "@/lib/db";
 import { searchPlatforms as searchIgdbPlatforms } from "@/modules/igdb";
 import type { Platform } from "@/generated/prisma/client";
 
+export function getPlatform(id: string): Promise<Platform | null> {
+  return prisma.platform.findUnique({ where: { id } });
+}
+
 export async function searchPlatforms(term: string): Promise<Platform[]> {
   const local = await findLocal(term);
   if (local.length > 0) {

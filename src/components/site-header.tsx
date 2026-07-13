@@ -1,21 +1,24 @@
+import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 
 export async function SiteHeader() {
   const session = await auth();
 
   return (
-    <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-3">
-      <span className="text-sm font-semibold tracking-tight">gameColector</span>
+    <header className="flex items-center justify-between border-b border-stone-200 px-6 py-3">
+      <Link href="/" className="text-sm font-semibold tracking-tight">
+        gameColector
+      </Link>
       {session?.user ? (
         <div className="flex items-center gap-3">
-          <span className="text-sm text-zinc-600">{session.user.name}</span>
+          <span className="text-sm text-stone-600">{session.user.name}</span>
           <form
             action={async () => {
               "use server";
               await signOut();
             }}
           >
-            <button type="submit" className="text-sm text-zinc-600 underline">
+            <button type="submit" className="text-sm text-stone-500 underline">
               Salir
             </button>
           </form>
@@ -29,7 +32,7 @@ export async function SiteHeader() {
         >
           <button
             type="submit"
-            className="rounded border border-zinc-300 px-3 py-1 text-sm"
+            className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100"
           >
             Entrar con GitHub
           </button>

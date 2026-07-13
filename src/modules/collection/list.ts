@@ -1,9 +1,33 @@
 import { prisma } from "@/lib/db";
-import type { Game, UserItem } from "@/generated/prisma/client";
+import type { Game, Platform, UserItem } from "@/generated/prisma/client";
 
 export interface PlatformCollection {
   console: UserItem | null;
   games: { item: UserItem; game: Game }[];
+}
+
+export interface UserPlatform {
+  item: UserItem;
+  platform: Platform;
+}
+
+export async function getUserPlatforms(
+  userId: string,
+): Promise<UserPlatform[]> {
+  const items = await prisma.userItem.findMany({
+    where: { userId, itemType: "platform" },
+  });
+  const platforms = await prisma.platform.findMany({
+    where: { id: { in: items.map((item) => item.catalogRefId) } },
+  });
+  const platformById = new Map(
+    platforms.map((platform) => [platform.id, platform]),
+  );
+
+  return items
+    .map((item) => ({ item, platform: platformById.get(item.catalogRefId) }))
+    .filter((entry): entry is UserPlatform => entry.platform !== undefined)
+    .sort((a, b) => a.platform.name.localeCompare(b.platform.name));
 }
 
 export async function getPlatformCollection(

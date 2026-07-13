@@ -41,6 +41,9 @@
 - Las fuentes externas se testean contra la interfaz con dobles; no golpear APIs
   reales en tests.
 - No perseguir cobertura por cobertura; probar lo que tiene lógica real.
+- La capa de acceso a datos se testea por integración contra Postgres. `npm test`
+  requiere la DB levantada (`npm run db:up`); usa una base separada
+  (`gamecolector_test`) que se crea y migra sola.
 
 ## Git
 

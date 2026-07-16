@@ -1,5 +1,14 @@
 export { addItem } from "./add";
-export { getPlatformCollection, getUserPlatforms, getGameItems } from "./list";
-export type { PlatformCollection, UserPlatform } from "./list";
+export {
+  getPlatformCollection,
+  getUserPlatforms,
+  getGameItems,
+  getPlatformsOverview,
+} from "./list";
+export type {
+  PlatformCollection,
+  UserPlatform,
+  PlatformOverview,
+} from "./list";
 export { isComplete } from "./completeness";
 export type { AddItemInput, GameComponents, PlatformComponents } from "./types";

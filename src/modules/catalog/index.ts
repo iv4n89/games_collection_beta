@@ -3,4 +3,5 @@ export {
   searchGamesForPlatform,
   getShowcaseGames,
   getGame,
+  getPlatformGames,
 } from "./games";

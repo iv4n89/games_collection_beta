@@ -37,6 +37,15 @@ export async function searchGames(term: string): Promise<IgdbGame[]> {
   return raw.map(mapGame);
 }
 
+export async function getPopularGamesForPlatform(
+  platformIgdbId: number,
+  limit: number,
+): Promise<IgdbGame[]> {
+  const body = `fields name,slug,summary,first_release_date,cover.url,platforms; where platforms = (${platformIgdbId}) & cover != null & total_rating_count != null; sort total_rating_count desc; limit ${limit};`;
+  const raw = await igdbQuery<RawGame[]>("games", body);
+  return raw.map(mapGame);
+}
+
 export async function getPopularGames(
   limit: number,
 ): Promise<IgdbPopularGame[]> {

@@ -13,15 +13,14 @@ export async function getPlatformWithSummary(
   id: string,
 ): Promise<Platform | null> {
   const platform = await prisma.platform.findUnique({ where: { id } });
-  if (
-    !platform ||
-    platform.igdbId === null ||
-    (platform.summary !== null && platform.category !== null)
-  ) {
+  if (!platform || platform.igdbId === null || platform.enrichedAt !== null) {
     return platform;
   }
-  const details = await getPlatformDetails(platform.igdbId);
-  if (!details.summary && !details.category) {
+  let details: { summary?: string; category?: string };
+  try {
+    details = await getPlatformDetails(platform.igdbId);
+  } catch {
+    // IGDB no disponible: se muestra lo cacheado y se reintenta en otra visita.
     return platform;
   }
   return prisma.platform.update({
@@ -29,6 +28,7 @@ export async function getPlatformWithSummary(
     data: {
       summary: platform.summary ?? details.summary ?? null,
       category: platform.category ?? details.category ?? null,
+      enrichedAt: new Date(),
     },
   });
 }

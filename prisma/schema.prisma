@@ -70,10 +70,12 @@ model Platform {
   name        String
   slug        String      @unique
   generation  Int?
-  imageUrl    String?
-  summary     String?
-  category    String?
-  source      ItemSource  @default(igdb)
+  imageUrl      String?
+  summary       String?
+  category      String?
+  enrichedAt    DateTime?
+  gamesSeededAt DateTime?
+  source        ItemSource  @default(igdb)
   games       Game[]
   accessories Accessory[]
 }

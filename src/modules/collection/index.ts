@@ -3,6 +3,7 @@ export {
   getPlatformCollection,
   getUserPlatforms,
   getGameItems,
+  getConsoleItem,
   getPlatformsOverview,
 } from "./list";
 export type {

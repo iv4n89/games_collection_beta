@@ -17,9 +17,16 @@ export async function getPlatformGames(platformId: string): Promise<Game[]> {
   if (!platform) {
     return [];
   }
-  const count = await prisma.game.count({ where: { platformId } });
-  if (count < 12 && platform.igdbId !== null) {
-    await seedPlatformGames(platformId, platform.igdbId);
+  if (platform.gamesSeededAt === null && platform.igdbId !== null) {
+    try {
+      await seedPlatformGames(platformId, platform.igdbId);
+      await prisma.platform.update({
+        where: { id: platformId },
+        data: { gamesSeededAt: new Date() },
+      });
+    } catch {
+      // IGDB no disponible: se muestran los juegos ya cacheados; se reintenta.
+    }
   }
   return prisma.game.findMany({
     where: { platformId },

@@ -114,6 +114,21 @@ export async function getPlatformCollection(
   return { console: consoleItem, games: gameItems };
 }
 
+export function getConsoleItem(
+  userId: string,
+  platformId: string,
+): Promise<UserItem | null> {
+  return prisma.userItem.findUnique({
+    where: {
+      userId_itemType_catalogRefId: {
+        userId,
+        itemType: "platform",
+        catalogRefId: platformId,
+      },
+    },
+  });
+}
+
 export async function getGameItems(
   userId: string,
   gameIds: string[],

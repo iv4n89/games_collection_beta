@@ -7,7 +7,7 @@ import {
   getPlatformAccessories,
   getPlatformEditions,
 } from "@/modules/catalog";
-import { getPlatformCollection, getGameItems, isComplete } from "@/modules/collection";
+import { getConsoleItem, getGameItems, isComplete } from "@/modules/collection";
 import { ItemStatus } from "@/components/item-status";
 import { PlatformTabs } from "@/components/platform-tabs";
 import { GamesBrowser, type GameEntry } from "@/components/games-browser";
@@ -116,7 +116,7 @@ export default async function PlatformPage({
   let consoleItem: UserItem | null = null;
   let gameItems: Map<string, UserItem> = new Map();
   if (userId) {
-    consoleItem = (await getPlatformCollection(userId, id)).console;
+    consoleItem = await getConsoleItem(userId, id);
     gameItems = await getGameItems(
       userId,
       games.map((game) => game.id),

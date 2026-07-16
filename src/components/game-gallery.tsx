@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 
-export function GameGallery({
-  images,
-  platformName,
-}: {
-  images: string[];
-  platformName?: string;
-}) {
+export function GameGallery({ images }: { images: string[] }) {
   const [selected, setSelected] = useState(0);
   if (images.length === 0) {
     return null;
@@ -20,13 +14,6 @@ export function GameGallery({
       <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container ambient-shadow border border-white/5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={main} alt="" className="w-full h-full object-contain" />
-        {platformName ? (
-          <div className="absolute top-4 left-4 bg-surface-container-highest/90 backdrop-blur-sm px-3 py-1.5 rounded-md border border-outline-variant/30">
-            <span className="text-label-md text-on-surface tracking-wider">
-              {platformName}
-            </span>
-          </div>
-        ) : null}
       </div>
 
       {images.length > 1 ? (

@@ -183,7 +183,7 @@ export default async function GamePage({
         {/* Left: gallery (imagen grande = miniatura seleccionada) + vídeo */}
         <div className="lg:col-span-5 flex flex-col gap-6">
           {galleryImages.length > 0 ? (
-            <GameGallery images={galleryImages} platformName={platform?.name} />
+            <GameGallery images={galleryImages} />
           ) : (
             <div className="w-full aspect-[4/3] rounded-xl bg-surface-container border border-white/5 flex items-center justify-center p-6">
               <span className="text-label-md text-on-surface-variant text-center">

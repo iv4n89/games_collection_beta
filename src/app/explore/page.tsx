@@ -1,10 +1,29 @@
 import { auth } from "@/auth";
 import { getPlatformsOverview } from "@/modules/collection";
-import { PlatformModuleCard } from "@/components/platform-module-card";
+import {
+  seedAllPlatforms,
+  ensurePlatformGameCounts,
+} from "@/modules/catalog";
+import { PlatformGrid } from "@/components/platform-grid";
 
 export default async function ExplorePage() {
   const session = await auth();
-  const overviews = await getPlatformsOverview(session?.user?.id ?? null);
+  const userId = session?.user?.id ?? null;
+  let overviews = await getPlatformsOverview(userId);
+  if (overviews.length < 50) {
+    try {
+      await seedAllPlatforms();
+      overviews = await getPlatformsOverview(userId);
+    } catch {
+      // IGDB no disponible: se muestran las plataformas ya cacheadas.
+    }
+  }
+  try {
+    await ensurePlatformGameCounts();
+    overviews = await getPlatformsOverview(userId);
+  } catch {
+    // IGDB no disponible: los totales se completarán en otra visita.
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto pt-stack-md">
@@ -20,14 +39,7 @@ export default async function ExplorePage() {
           Aún no hay plataformas en el catálogo. Busca una consola desde Inicio.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-grid-gutter">
-          {overviews.map((overview) => (
-            <PlatformModuleCard
-              key={overview.platform.id}
-              overview={overview}
-            />
-          ))}
-        </div>
+        <PlatformGrid overviews={overviews} />
       )}
     </div>
   );

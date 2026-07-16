@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { getGame, getPlatform } from "@/modules/catalog";
+import { getGameWithMedia, getPlatform } from "@/modules/catalog";
 import { getGameItems, isComplete } from "@/modules/collection";
+import { GameGallery } from "@/components/game-gallery";
 import type { UserItem } from "@/generated/prisma/client";
 import { addToCollection, addToWishlist } from "./actions";
 
@@ -133,7 +134,7 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = await getGame(id);
+  const game = await getGameWithMedia(id);
   if (!game) {
     notFound();
   }
@@ -146,8 +147,12 @@ export default async function GamePage({
     : null;
   const owned = item?.ownership === "owned";
 
+  const galleryImages = [game.coverUrl, ...game.screenshots].filter(
+    (url): url is string => Boolean(url),
+  );
+
   return (
-    <div className="max-w-[1440px] mx-auto pt-stack-md">
+    <div className="max-w-[1200px] mx-auto pt-stack-md">
       <div className="mb-6 flex items-center gap-2 text-on-surface-variant text-label-sm">
         <Link
           href="/"
@@ -175,54 +180,27 @@ export default async function GamePage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-grid-gutter">
-        {/* Left: cover + gallery */}
+        {/* Left: gallery (imagen grande = miniatura seleccionada) + vídeo */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-surface-container ambient-shadow border border-white/5 group">
-            {game.coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={game.coverUrl}
-                alt={game.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center p-6">
-                <span className="text-label-md text-on-surface-variant text-center">
-                  {game.name}
-                </span>
-              </div>
-            )}
-            {platform ? (
-              <div className="absolute top-4 left-4 bg-surface-container-highest/90 backdrop-blur-sm px-3 py-1.5 rounded-md border border-outline-variant/30">
-                <span className="text-label-md text-on-surface tracking-wider">
-                  {platform.name}
-                </span>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="aspect-square rounded-lg overflow-hidden border-2 border-primary bg-surface-container">
-              {game.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={game.coverUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : null}
+          {galleryImages.length > 0 ? (
+            <GameGallery images={galleryImages} />
+          ) : (
+            <div className="w-full aspect-[4/3] rounded-xl bg-surface-container border border-white/5 flex items-center justify-center p-6">
+              <span className="text-label-md text-on-surface-variant text-center">
+                {game.name}
+              </span>
             </div>
-            {["inventory_2", "menu_book"].map((icon) => (
-              <div
-                key={icon}
-                className="aspect-square rounded-lg border border-outline-variant/30 bg-surface-container-low flex items-center justify-center text-on-surface-variant/40"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {icon}
-                </span>
-              </div>
-            ))}
-          </div>
+          )}
+
+          {game.videoId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${game.videoId}`}
+              title={`Vídeo de ${game.name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full aspect-video rounded-xl border border-white/5 bg-surface-container"
+            />
+          ) : null}
         </div>
 
         {/* Right: details, market data, management */}

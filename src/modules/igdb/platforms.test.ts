@@ -7,6 +7,7 @@ import {
   searchPlatforms,
   getPlatformDetails,
   platformCategoryLabel,
+  getPlatformGameCounts,
 } from "./platforms";
 
 const mockedQuery = vi.mocked(igdbQuery);
@@ -23,6 +24,25 @@ describe("platformCategoryLabel", () => {
   it("devuelve el nombre original si no está mapeado, y undefined si falta", () => {
     expect(platformCategoryLabel("Handheld_hybrid")).toBe("Handheld_hybrid");
     expect(platformCategoryLabel(undefined)).toBeUndefined();
+  });
+});
+
+describe("getPlatformGameCounts", () => {
+  it("agrupa por multiquery y parsea el nombre p{id} a conteo", async () => {
+    mockedQuery.mockResolvedValue([
+      { name: "p18", count: 332 },
+      { name: "p19", count: 431 },
+    ]);
+
+    const counts = await getPlatformGameCounts([18, 19]);
+
+    const [endpoint, body] = mockedQuery.mock.calls[0];
+    expect(endpoint).toBe("multiquery");
+    expect(body).toContain('query games/count "p18"');
+    expect(body).toContain("platforms = (18)");
+    expect(body).toContain("game_type = 0");
+    expect(counts.get(18)).toBe(332);
+    expect(counts.get(19)).toBe(431);
   });
 });
 

@@ -2,44 +2,51 @@ import { prisma } from "@/lib/db";
 import {
   searchGames as searchIgdbGames,
   getPopularGames,
-  getPopularGamesForPlatform,
+  getOfficialPlatformGames,
+  searchOfficialPlatformGames,
+  getGameMedia,
+  type GameSort,
 } from "@/modules/igdb";
-import type { Game } from "@/generated/prisma/client";
+import type { IgdbGame } from "@/modules/igdb";
+import type { Game, Prisma } from "@/generated/prisma/client";
+
+const GAME_ORDER_BY: Record<GameSort, Prisma.GameOrderByWithRelationInput> = {
+  name_asc: { name: "asc" },
+  name_desc: { name: "desc" },
+  year_desc: { releaseDate: "desc" },
+  year_asc: { releaseDate: "asc" },
+};
 
 export function getGame(id: string): Promise<Game | null> {
   return prisma.game.findUnique({ where: { id } });
 }
 
-export async function getPlatformGames(platformId: string): Promise<Game[]> {
-  const platform = await prisma.platform.findUnique({
-    where: { id: platformId },
-  });
-  if (!platform) {
-    return [];
+export async function getGameWithMedia(id: string): Promise<Game | null> {
+  const game = await prisma.game.findUnique({ where: { id } });
+  if (!game || game.igdbId === null || game.mediaFetchedAt !== null) {
+    return game;
   }
-  if (platform.gamesSeededAt === null && platform.igdbId !== null) {
-    try {
-      await seedPlatformGames(platformId, platform.igdbId);
-      await prisma.platform.update({
-        where: { id: platformId },
-        data: { gamesSeededAt: new Date() },
-      });
-    } catch {
-      // IGDB no disponible: se muestran los juegos ya cacheados; se reintenta.
-    }
+  let media: { screenshots: string[]; videoId?: string };
+  try {
+    media = await getGameMedia(game.igdbId);
+  } catch {
+    return game;
   }
-  return prisma.game.findMany({
-    where: { platformId },
-    orderBy: { name: "asc" },
+  return prisma.game.update({
+    where: { id },
+    data: {
+      screenshots: media.screenshots,
+      videoId: media.videoId ?? null,
+      mediaFetchedAt: new Date(),
+    },
   });
 }
 
-async function seedPlatformGames(
+function upsertPlatformGames(
   platformId: string,
-  platformIgdbId: number,
-): Promise<void> {
-  const games = await getPopularGamesForPlatform(platformIgdbId, 30);
-  await Promise.all(
+  games: IgdbGame[],
+): Promise<Game[]> {
+  return Promise.all(
     games.map((game) =>
       prisma.game.upsert({
         where: { igdbId_platformId: { igdbId: game.igdbId, platformId } },
@@ -63,6 +70,69 @@ async function seedPlatformGames(
       }),
     ),
   );
+}
+
+// Página de juegos oficiales de la plataforma (desde IGDB, cacheando al vuelo).
+// Si IGDB falla, degrada a los juegos ya cacheados en vez de romper el render.
+export async function getPlatformGamesPage(
+  platformId: string,
+  options: { offset: number; limit: number; sort: GameSort },
+): Promise<Game[]> {
+  // Saneado una vez (los args llegan de una server action pública): se reusa
+  // tanto para IGDB como para el fallback a Prisma (skip no admite negativos).
+  const offset =
+    Number.isInteger(options.offset) && options.offset >= 0
+      ? options.offset
+      : 0;
+  const sort = options.sort in GAME_ORDER_BY ? options.sort : "name_asc";
+  const platform = await prisma.platform.findUnique({
+    where: { id: platformId },
+  });
+  if (!platform || platform.igdbId === null) {
+    return [];
+  }
+  try {
+    const games = await getOfficialPlatformGames(platform.igdbId, {
+      offset,
+      limit: options.limit,
+      sort,
+    });
+    return await upsertPlatformGames(platformId, games);
+  } catch {
+    return prisma.game.findMany({
+      where: { platformId },
+      orderBy: GAME_ORDER_BY[sort],
+      skip: offset,
+      take: options.limit,
+    });
+  }
+}
+
+export async function searchPlatformGames(
+  platformId: string,
+  term: string,
+  limit: number,
+): Promise<Game[]> {
+  const platform = await prisma.platform.findUnique({
+    where: { id: platformId },
+  });
+  if (!platform || platform.igdbId === null) {
+    return [];
+  }
+  try {
+    const games = await searchOfficialPlatformGames(
+      platform.igdbId,
+      term,
+      limit,
+    );
+    return await upsertPlatformGames(platformId, games);
+  } catch {
+    return prisma.game.findMany({
+      where: { platformId, name: { contains: term, mode: "insensitive" } },
+      orderBy: { name: "asc" },
+      take: limit,
+    });
+  }
 }
 
 export async function getShowcaseGames(limit: number): Promise<Game[]> {

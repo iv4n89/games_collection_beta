@@ -2,8 +2,61 @@ import { prisma } from "@/lib/db";
 import {
   searchPlatforms as searchIgdbPlatforms,
   getPlatformDetails,
+  getAllPlatforms,
+  getPlatformGameCounts,
 } from "@/modules/igdb";
 import type { Accessory, Platform, SpecialEdition } from "@/generated/prisma/client";
+
+export async function ensurePlatformGameCounts(): Promise<void> {
+  // Los conteos de IGDB son lentos; se rellenan por tandas para no bloquear
+  // el render con una primera carga enorme. Convergen en pocas visitas.
+  const platforms = await prisma.platform.findMany({
+    where: { gameCount: null, igdbId: { not: null } },
+    select: { id: true, igdbId: true },
+    take: 40,
+  });
+  if (platforms.length === 0) {
+    return;
+  }
+  const counts = await getPlatformGameCounts(
+    platforms.map((platform) => platform.igdbId!),
+  );
+  await Promise.all(
+    platforms.map((platform) =>
+      prisma.platform.update({
+        where: { id: platform.id },
+        data: { gameCount: counts.get(platform.igdbId!) ?? 0 },
+      }),
+    ),
+  );
+}
+
+export async function seedAllPlatforms(): Promise<void> {
+  const platforms = await getAllPlatforms();
+  await Promise.all(
+    platforms.map((platform) =>
+      prisma.platform.upsert({
+        where: { igdbId: platform.igdbId },
+        create: {
+          igdbId: platform.igdbId,
+          name: platform.name,
+          slug: platform.slug,
+          generation: platform.generation,
+          imageUrl: platform.logoUrl,
+          category: platform.category,
+          source: "igdb",
+        },
+        update: {
+          name: platform.name,
+          slug: platform.slug,
+          generation: platform.generation,
+          imageUrl: platform.logoUrl,
+          category: platform.category,
+        },
+      }),
+    ),
+  );
+}
 
 export function getPlatform(id: string): Promise<Platform | null> {
   return prisma.platform.findUnique({ where: { id } });

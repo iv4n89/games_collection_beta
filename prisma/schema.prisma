@@ -73,6 +73,7 @@ model Platform {
   imageUrl      String?
   summary       String?
   category      String?
+  gameCount     Int?
   enrichedAt    DateTime?
   gamesSeededAt DateTime?
   source        ItemSource  @default(igdb)
@@ -87,10 +88,13 @@ model Game {
   slug        String
   platformId  String
   platform    Platform   @relation(fields: [platformId], references: [id], onDelete: Cascade)
-  coverUrl    String?
-  releaseDate DateTime?
-  summary     String?
-  source      ItemSource @default(igdb)
+  coverUrl       String?
+  releaseDate    DateTime?
+  summary        String?
+  screenshots    String[]
+  videoId        String?
+  mediaFetchedAt DateTime?
+  source         ItemSource @default(igdb)
 
   @@unique([igdbId, platformId])
   @@index([platformId])

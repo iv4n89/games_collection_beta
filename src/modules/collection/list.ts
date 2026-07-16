@@ -1,6 +1,51 @@
 import { prisma } from "@/lib/db";
 import type { Game, Platform, UserItem } from "@/generated/prisma/client";
 
+export interface GameEntry {
+  id: string;
+  name: string;
+  coverUrl: string | null;
+  year: number | null;
+  status: "owned" | "wishlist" | null;
+}
+
+export async function buildGameEntries(
+  userId: string | null,
+  games: Game[],
+): Promise<GameEntry[]> {
+  const items = userId
+    ? await getGameItems(
+        userId,
+        games.map((game) => game.id),
+      )
+    : new Map<string, UserItem>();
+  return games.map((game) => {
+    const item = items.get(game.id) ?? null;
+    return {
+      id: game.id,
+      name: game.name,
+      coverUrl: game.coverUrl,
+      year: game.releaseDate ? game.releaseDate.getFullYear() : null,
+      status: item ? item.ownership : null,
+    };
+  });
+}
+
+export async function getPlatformWishlistGames(
+  userId: string,
+  platformId: string,
+): Promise<GameEntry[]> {
+  const items = await prisma.userItem.findMany({
+    where: { userId, itemType: "game", ownership: "wishlist" },
+    select: { catalogRefId: true },
+  });
+  const games = await prisma.game.findMany({
+    where: { id: { in: items.map((item) => item.catalogRefId) }, platformId },
+    orderBy: { name: "asc" },
+  });
+  return buildGameEntries(userId, games);
+}
+
 export interface PlatformCollection {
   console: UserItem | null;
   games: { item: UserItem; game: Game }[];
@@ -20,9 +65,9 @@ export interface PlatformOverview {
 export async function getPlatformsOverview(
   userId: string | null,
 ): Promise<PlatformOverview[]> {
-  const platforms = await prisma.platform.findMany({
-    orderBy: { name: "asc" },
-  });
+  const platforms = (await prisma.platform.findMany()).sort((a, b) =>
+    a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+  );
   const counts = await prisma.game.groupBy({
     by: ["platformId"],
     _count: { _all: true },

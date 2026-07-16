@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import type { Game, Platform, UserItem } from "@/generated/prisma/client";
-import { isComplete } from "./completeness";
 
 export interface GameEntry {
   id: string;
@@ -8,8 +7,6 @@ export interface GameEntry {
   coverUrl: string | null;
   year: number | null;
   status: "owned" | "wishlist" | null;
-  complete: boolean;
-  onlyCartridge: boolean;
 }
 
 export async function buildGameEntries(
@@ -24,17 +21,12 @@ export async function buildGameEntries(
     : new Map<string, UserItem>();
   return games.map((game) => {
     const item = items.get(game.id) ?? null;
-    const owned = item?.ownership === "owned";
     return {
       id: game.id,
       name: game.name,
       coverUrl: game.coverUrl,
       year: game.releaseDate ? game.releaseDate.getFullYear() : null,
       status: item ? item.ownership : null,
-      complete: owned ? isComplete(item) : false,
-      onlyCartridge: owned
-        ? item.hasGame === true && !item.hasBox && !item.hasManual
-        : false,
     };
   });
 }

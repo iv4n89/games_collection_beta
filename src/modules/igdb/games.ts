@@ -82,7 +82,9 @@ export async function getOfficialPlatformGames(
   platformIgdbId: number,
   { offset, limit, sort }: { offset: number; limit: number; sort: GameSort },
 ): Promise<IgdbGame[]> {
-  const body = `fields name,slug,summary,first_release_date,cover.url,platforms; where platforms = (${platformIgdbId}) & game_type = 0 & cover != null & total_rating_count != null; ${SORT_CLAUSES[sort]} limit ${limit}; offset ${offset};`;
+  const sortClause = SORT_CLAUSES[sort] ?? SORT_CLAUSES.name_asc;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+  const body = `fields name,slug,summary,first_release_date,cover.url,platforms; where platforms = (${platformIgdbId}) & game_type = 0 & cover != null & total_rating_count != null; ${sortClause} limit ${limit}; offset ${safeOffset};`;
   const raw = await igdbQuery<RawGame[]>("games", body);
   return raw.map(mapGame);
 }

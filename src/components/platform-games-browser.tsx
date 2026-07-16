@@ -34,15 +34,19 @@ export function PlatformGamesBrowser({
   const [searchResults, setSearchResults] = useState<GameEntry[] | null>(null);
   const [searching, setSearching] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const searchReqRef = useRef(0);
 
   async function changeSort(next: GameSort) {
     setSort(next);
     setLoading(true);
-    const first = await loadMore(0, next);
-    setGames(first);
-    setOffset(first.length);
-    setDone(first.length < pageSize);
-    setLoading(false);
+    try {
+      const first = await loadMore(0, next);
+      setGames(first);
+      setOffset(first.length);
+      setDone(first.length < pageSize);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const searchMode = query.trim() !== "";
@@ -53,10 +57,18 @@ export function PlatformGamesBrowser({
       return;
     }
     const timer = setTimeout(async () => {
+      const reqId = ++searchReqRef.current;
       setSearching(true);
-      const results = await search(term);
-      setSearchResults(results);
-      setSearching(false);
+      try {
+        const results = await search(term);
+        if (reqId === searchReqRef.current) {
+          setSearchResults(results);
+        }
+      } finally {
+        if (reqId === searchReqRef.current) {
+          setSearching(false);
+        }
+      }
     }, 350);
     return () => clearTimeout(timer);
   }, [query, search]);
@@ -73,12 +85,13 @@ export function PlatformGamesBrowser({
       (entries) => {
         if (entries[0]?.isIntersecting) {
           setLoading(true);
-          loadMore(offset, sort).then((next) => {
-            setGames((current) => [...current, ...next]);
-            setOffset((current) => current + next.length);
-            setDone(next.length < pageSize);
-            setLoading(false);
-          });
+          loadMore(offset, sort)
+            .then((next) => {
+              setGames((current) => [...current, ...next]);
+              setOffset((current) => current + next.length);
+              setDone(next.length < pageSize);
+            })
+            .finally(() => setLoading(false));
         }
       },
       { rootMargin: "400px" },

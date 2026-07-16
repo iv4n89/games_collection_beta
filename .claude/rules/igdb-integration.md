@@ -13,11 +13,22 @@ todas las ediciones especiales: esos se registran manualmente (`source = manual`
 
 ## Caché en DB propia
 
-- La app **no llama a IGDB en tiempo de render**. Consulta el catálogo local.
+- Preferir el catálogo local. Datos de detalle (summary/categoría de plataforma,
+  medios de juego) se rellenan de forma perezosa una sola vez (marcador) y se
+  cachean.
 - Al buscar/añadir un ítem que no está en catálogo, se obtiene de IGDB y se
   persiste (`source = igdb`) para uso posterior.
-- Guardar `igdbId` para poder re-sincronizar. Refrescos de datos = job en
-  background, no petición de usuario.
+- Guardar `igdbId` para poder re-sincronizar.
+
+### Navegación paginada (browse-time)
+
+- El catálogo oficial completo de una plataforma (cientos/miles de juegos) no se
+  puede sembrar entero. Por eso el **listado paginado** de una plataforma pide
+  cada página a IGDB en tiempo de navegación (`getPlatformGamesPage`,
+  `searchPlatformGames`) y cachea al vuelo lo que trae.
+- Estas llamadas en render **deben** ir con `try/catch` y degradar al catálogo
+  local si IGDB falla (nunca romper el render).
+- El resto de vistas (home, colección) siguen leyendo del catálogo local.
 
 ## Imágenes
 

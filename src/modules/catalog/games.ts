@@ -8,7 +8,14 @@ import {
   type GameSort,
 } from "@/modules/igdb";
 import type { IgdbGame } from "@/modules/igdb";
-import type { Game } from "@/generated/prisma/client";
+import type { Game, Prisma } from "@/generated/prisma/client";
+
+const GAME_ORDER_BY: Record<GameSort, Prisma.GameOrderByWithRelationInput> = {
+  name_asc: { name: "asc" },
+  name_desc: { name: "desc" },
+  year_desc: { releaseDate: "desc" },
+  year_asc: { releaseDate: "asc" },
+};
 
 export function getGame(id: string): Promise<Game | null> {
   return prisma.game.findUnique({ where: { id } });
@@ -66,6 +73,7 @@ function upsertPlatformGames(
 }
 
 // Página de juegos oficiales de la plataforma (desde IGDB, cacheando al vuelo).
+// Si IGDB falla, degrada a los juegos ya cacheados en vez de romper el render.
 export async function getPlatformGamesPage(
   platformId: string,
   options: { offset: number; limit: number; sort: GameSort },
@@ -76,8 +84,17 @@ export async function getPlatformGamesPage(
   if (!platform || platform.igdbId === null) {
     return [];
   }
-  const games = await getOfficialPlatformGames(platform.igdbId, options);
-  return upsertPlatformGames(platformId, games);
+  try {
+    const games = await getOfficialPlatformGames(platform.igdbId, options);
+    return await upsertPlatformGames(platformId, games);
+  } catch {
+    return prisma.game.findMany({
+      where: { platformId },
+      orderBy: GAME_ORDER_BY[options.sort],
+      skip: options.offset,
+      take: options.limit,
+    });
+  }
 }
 
 export async function searchPlatformGames(
@@ -91,8 +108,20 @@ export async function searchPlatformGames(
   if (!platform || platform.igdbId === null) {
     return [];
   }
-  const games = await searchOfficialPlatformGames(platform.igdbId, term, limit);
-  return upsertPlatformGames(platformId, games);
+  try {
+    const games = await searchOfficialPlatformGames(
+      platform.igdbId,
+      term,
+      limit,
+    );
+    return await upsertPlatformGames(platformId, games);
+  } catch {
+    return prisma.game.findMany({
+      where: { platformId, name: { contains: term, mode: "insensitive" } },
+      orderBy: { name: "asc" },
+      take: limit,
+    });
+  }
 }
 
 export async function getShowcaseGames(limit: number): Promise<Game[]> {

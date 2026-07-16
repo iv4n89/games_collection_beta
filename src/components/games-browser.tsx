@@ -16,7 +16,6 @@ export interface GameEntry {
 const FILTERS = [
   { key: "todos", label: "Todos" },
   { key: "owned", label: "Poseídos" },
-  { key: "wishlist", label: "En deseos" },
   { key: "cib", label: "Completos (CIB)" },
   { key: "cart", label: "Solo cartucho" },
 ] as const;
@@ -27,8 +26,6 @@ function matches(entry: GameEntry, filter: FilterKey): boolean {
   switch (filter) {
     case "owned":
       return entry.status === "owned";
-    case "wishlist":
-      return entry.status === "wishlist";
     case "cib":
       return entry.complete;
     case "cart":

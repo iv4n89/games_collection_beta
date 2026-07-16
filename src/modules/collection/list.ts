@@ -65,3 +65,13 @@ export async function getPlatformCollection(
 
   return { console: consoleItem, games: gameItems };
 }
+
+export async function getGameItems(
+  userId: string,
+  gameIds: string[],
+): Promise<Map<string, UserItem>> {
+  const items = await prisma.userItem.findMany({
+    where: { userId, itemType: "game", catalogRefId: { in: gameIds } },
+  });
+  return new Map(items.map((item) => [item.catalogRefId, item]));
+}

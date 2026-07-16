@@ -1,2 +1,2 @@
 export { searchPlatforms, getPlatform } from "./platforms";
-export { searchGamesForPlatform } from "./games";
+export { searchGamesForPlatform, getShowcaseGames } from "./games";

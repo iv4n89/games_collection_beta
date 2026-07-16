@@ -46,6 +46,28 @@ export async function getPopularGamesForPlatform(
   return raw.map(mapGame);
 }
 
+interface RawGameMedia {
+  screenshots?: { url?: string }[];
+  videos?: { video_id?: string }[];
+}
+
+export async function getGameMedia(
+  igdbId: number,
+): Promise<{ screenshots: string[]; videoId?: string }> {
+  const body = `fields screenshots.url,videos.video_id; where id = ${igdbId};`;
+  const raw = await igdbQuery<RawGameMedia[]>("games", body);
+  const game = raw[0];
+  if (!game) {
+    return { screenshots: [] };
+  }
+  const screenshots = (game.screenshots ?? [])
+    .map((shot) => resolveImageUrl(shot.url, "t_screenshot_big"))
+    .filter((url): url is string => Boolean(url))
+    .slice(0, 3);
+  const videoId = game.videos?.find((video) => video.video_id)?.video_id;
+  return { screenshots, videoId };
+}
+
 export type GameSort = "name_asc" | "name_desc" | "year_desc" | "year_asc";
 
 const SORT_CLAUSES: Record<GameSort, string> = {

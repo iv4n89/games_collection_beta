@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { getGame, getPlatform } from "@/modules/catalog";
+import { getGameWithMedia, getPlatform } from "@/modules/catalog";
 import { getGameItems, isComplete } from "@/modules/collection";
 import type { UserItem } from "@/generated/prisma/client";
 import { addToCollection, addToWishlist } from "./actions";
@@ -133,7 +133,7 @@ export default async function GamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = await getGame(id);
+  const game = await getGameWithMedia(id);
   if (!game) {
     notFound();
   }
@@ -201,28 +201,29 @@ export default async function GamePage({
             ) : null}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="aspect-square rounded-lg overflow-hidden border-2 border-primary bg-surface-container">
-              {game.coverUrl ? (
+          {game.videoId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${game.videoId}`}
+              title={`Vídeo de ${game.name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full aspect-video rounded-xl border border-white/5 bg-surface-container"
+            />
+          ) : null}
+
+          {game.screenshots.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {game.screenshots.slice(0, 3).map((shot) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={game.coverUrl}
+                  key={shot}
+                  src={shot}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full aspect-video object-cover rounded-lg border border-white/5"
                 />
-              ) : null}
+              ))}
             </div>
-            {["inventory_2", "menu_book"].map((icon) => (
-              <div
-                key={icon}
-                className="aspect-square rounded-lg border border-outline-variant/30 bg-surface-container-low flex items-center justify-center text-on-surface-variant/40"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {icon}
-                </span>
-              </div>
-            ))}
-          </div>
+          ) : null}
         </div>
 
         {/* Right: details, market data, management */}

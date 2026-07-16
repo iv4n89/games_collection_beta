@@ -4,6 +4,7 @@ import {
   getPopularGames,
   getOfficialPlatformGames,
   searchOfficialPlatformGames,
+  getGameMedia,
   type GameSort,
 } from "@/modules/igdb";
 import type { IgdbGame } from "@/modules/igdb";
@@ -11,6 +12,27 @@ import type { Game } from "@/generated/prisma/client";
 
 export function getGame(id: string): Promise<Game | null> {
   return prisma.game.findUnique({ where: { id } });
+}
+
+export async function getGameWithMedia(id: string): Promise<Game | null> {
+  const game = await prisma.game.findUnique({ where: { id } });
+  if (!game || game.igdbId === null || game.mediaFetchedAt !== null) {
+    return game;
+  }
+  let media: { screenshots: string[]; videoId?: string };
+  try {
+    media = await getGameMedia(game.igdbId);
+  } catch {
+    return game;
+  }
+  return prisma.game.update({
+    where: { id },
+    data: {
+      screenshots: media.screenshots,
+      videoId: media.videoId ?? null,
+      mediaFetchedAt: new Date(),
+    },
+  });
 }
 
 function upsertPlatformGames(

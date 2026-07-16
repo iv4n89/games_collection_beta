@@ -10,6 +10,7 @@ export {
   searchGamesForPlatform,
   getShowcaseGames,
   getGame,
+  getGameWithMedia,
   getPlatformGamesPage,
   searchPlatformGames,
 } from "./games";

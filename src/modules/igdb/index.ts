@@ -4,6 +4,7 @@ export {
   getPopularGamesForPlatform,
   getOfficialPlatformGames,
   searchOfficialPlatformGames,
+  getGameMedia,
 } from "./games";
 export type { GameSort } from "./games";
 export {

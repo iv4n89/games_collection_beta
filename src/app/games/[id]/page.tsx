@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getGameWithMedia, getPlatform } from "@/modules/catalog";
 import { getGameItems, isComplete } from "@/modules/collection";
+import { GameGallery } from "@/components/game-gallery";
 import type { UserItem } from "@/generated/prisma/client";
 import { addToCollection, addToWishlist } from "./actions";
 
@@ -146,8 +147,12 @@ export default async function GamePage({
     : null;
   const owned = item?.ownership === "owned";
 
+  const galleryImages = [game.coverUrl, ...game.screenshots].filter(
+    (url): url is string => Boolean(url),
+  );
+
   return (
-    <div className="max-w-[1440px] mx-auto pt-stack-md">
+    <div className="max-w-[1200px] mx-auto pt-stack-md">
       <div className="mb-6 flex items-center gap-2 text-on-surface-variant text-label-sm">
         <Link
           href="/"
@@ -175,31 +180,17 @@ export default async function GamePage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-grid-gutter">
-        {/* Left: cover + gallery */}
+        {/* Left: gallery (imagen grande = miniatura seleccionada) + vídeo */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-surface-container ambient-shadow border border-white/5 group">
-            {game.coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={game.coverUrl}
-                alt={game.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center p-6">
-                <span className="text-label-md text-on-surface-variant text-center">
-                  {game.name}
-                </span>
-              </div>
-            )}
-            {platform ? (
-              <div className="absolute top-4 left-4 bg-surface-container-highest/90 backdrop-blur-sm px-3 py-1.5 rounded-md border border-outline-variant/30">
-                <span className="text-label-md text-on-surface tracking-wider">
-                  {platform.name}
-                </span>
-              </div>
-            ) : null}
-          </div>
+          {galleryImages.length > 0 ? (
+            <GameGallery images={galleryImages} platformName={platform?.name} />
+          ) : (
+            <div className="w-full aspect-[4/3] rounded-xl bg-surface-container border border-white/5 flex items-center justify-center p-6">
+              <span className="text-label-md text-on-surface-variant text-center">
+                {game.name}
+              </span>
+            </div>
+          )}
 
           {game.videoId ? (
             <iframe
@@ -209,20 +200,6 @@ export default async function GamePage({
               allowFullScreen
               className="w-full aspect-video rounded-xl border border-white/5 bg-surface-container"
             />
-          ) : null}
-
-          {game.screenshots.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {game.screenshots.slice(0, 3).map((shot) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={shot}
-                  src={shot}
-                  alt=""
-                  className="w-full aspect-video object-cover rounded-lg border border-white/5"
-                />
-              ))}
-            </div>
           ) : null}
         </div>
 

@@ -36,9 +36,14 @@ export default async function Home({
 
   return (
     <div className="max-w-[1440px] mx-auto pt-stack-md">
-      <section className="mb-stack-lg">
-        <HeroCarousel games={heroGames} />
-      </section>
+      {heroGames.length > 0 ? (
+        <section className="mb-stack-lg">
+          <h2 className="text-headline-lg text-on-surface mb-stack-sm">
+            Destacados
+          </h2>
+          <HeroCarousel games={heroGames} />
+        </section>
+      ) : null}
 
       <section className="mb-stack-lg">
         <h2 className="text-headline-md text-on-surface mb-stack-md flex items-center gap-2">
@@ -46,9 +51,9 @@ export default async function Home({
             className="material-symbols-outlined text-primary"
             aria-hidden="true"
           >
-            auto_awesome
+            grid_view
           </span>
-          Juegos destacados
+          Explora el catálogo
         </h2>
         {gridGames.length === 0 ? (
           <p className="text-body-md text-on-surface-variant">

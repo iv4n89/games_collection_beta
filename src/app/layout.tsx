@@ -28,9 +28,9 @@ export default async function RootLayout({
           rel="stylesheet"
         />
         <Sidebar user={user} />
-        <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+        <div className="flex-1 min-w-0 md:ml-64 flex flex-col min-h-screen">
           <TopBar user={user} />
-          <main className="flex-1 pt-16 px-container-padding-mobile md:px-container-padding-desktop pb-stack-lg">
+          <main className="flex-1 min-w-0 pt-16 px-container-padding-mobile md:px-container-padding-desktop pb-stack-lg">
             {children}
           </main>
           <Footer />

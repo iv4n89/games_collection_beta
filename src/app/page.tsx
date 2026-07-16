@@ -39,11 +39,13 @@ export default async function Home({
             Aún no has añadido consolas. Busca una abajo para empezar.
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <ul className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {platforms.map(({ item, platform }) => (
-              <PlatformCard key={item.id} platform={platform} />
+              <li key={item.id}>
+                <PlatformCard platform={platform} />
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
 

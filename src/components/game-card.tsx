@@ -1,10 +1,7 @@
 import { isComplete } from "@/modules/collection";
 import type { Game, UserItem } from "@/generated/prisma/client";
 
-function StatusBadge({ item }: { item: UserItem | null }) {
-  if (!item) {
-    return null;
-  }
+function StatusBadge({ item }: { item: UserItem }) {
   if (item.ownership === "wishlist") {
     return (
       <div
@@ -43,7 +40,7 @@ export function GameCard({
   item,
 }: {
   game: Game;
-  item: UserItem | null;
+  item: UserItem;
 }) {
   return (
     <article className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-surface-container-low ambient-shadow border border-white/5">

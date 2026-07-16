@@ -5,10 +5,12 @@ import { searchPlatforms, getShowcaseGames } from "@/modules/catalog";
 import { SearchForm } from "@/components/search-form";
 import { PlatformCard } from "@/components/platform-card";
 import { GameCard } from "@/components/game-card";
+import { HeroCarousel } from "@/components/hero-carousel";
 import type { UserItem } from "@/generated/prisma/client";
 import { addConsoleToCollection } from "./actions";
 
-const SHOWCASE_LIMIT = 12;
+const HERO_COUNT = 5;
+const GRID_COUNT = 12;
 
 export default async function Home({
   searchParams,
@@ -18,7 +20,9 @@ export default async function Home({
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const games = await getShowcaseGames(SHOWCASE_LIMIT);
+  const games = await getShowcaseGames(HERO_COUNT + GRID_COUNT);
+  const heroGames = games.slice(0, HERO_COUNT);
+  const gridGames = games.slice(HERO_COUNT);
   const gameItems: Map<string, UserItem> = userId
     ? await getGameItems(
         userId,
@@ -33,6 +37,10 @@ export default async function Home({
   return (
     <div className="max-w-[1440px] mx-auto pt-stack-md">
       <section className="mb-stack-lg">
+        <HeroCarousel games={heroGames} />
+      </section>
+
+      <section className="mb-stack-lg">
         <h2 className="text-headline-md text-on-surface mb-stack-md flex items-center gap-2">
           <span
             className="material-symbols-outlined text-primary"
@@ -42,13 +50,13 @@ export default async function Home({
           </span>
           Juegos destacados
         </h2>
-        {games.length === 0 ? (
+        {gridGames.length === 0 ? (
           <p className="text-body-md text-on-surface-variant">
             Aún no hay juegos en el catálogo.
           </p>
         ) : (
           <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
-            {games.map((game) => (
+            {gridGames.map((game) => (
               <li key={game.id}>
                 <Link
                   href={`/platforms/${game.platformId}`}

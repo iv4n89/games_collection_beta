@@ -78,6 +78,13 @@ export async function getPlatformGamesPage(
   platformId: string,
   options: { offset: number; limit: number; sort: GameSort },
 ): Promise<Game[]> {
+  // Saneado una vez (los args llegan de una server action pública): se reusa
+  // tanto para IGDB como para el fallback a Prisma (skip no admite negativos).
+  const offset =
+    Number.isInteger(options.offset) && options.offset >= 0
+      ? options.offset
+      : 0;
+  const sort = options.sort in GAME_ORDER_BY ? options.sort : "name_asc";
   const platform = await prisma.platform.findUnique({
     where: { id: platformId },
   });
@@ -85,13 +92,17 @@ export async function getPlatformGamesPage(
     return [];
   }
   try {
-    const games = await getOfficialPlatformGames(platform.igdbId, options);
+    const games = await getOfficialPlatformGames(platform.igdbId, {
+      offset,
+      limit: options.limit,
+      sort,
+    });
     return await upsertPlatformGames(platformId, games);
   } catch {
     return prisma.game.findMany({
       where: { platformId },
-      orderBy: GAME_ORDER_BY[options.sort],
-      skip: options.offset,
+      orderBy: GAME_ORDER_BY[sort],
+      skip: offset,
       take: options.limit,
     });
   }

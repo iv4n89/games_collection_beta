@@ -73,6 +73,7 @@ model Platform {
   imageUrl      String?
   summary       String?
   category      String?
+  gameCount     Int?
   enrichedAt    DateTime?
   gamesSeededAt DateTime?
   source        ItemSource  @default(igdb)

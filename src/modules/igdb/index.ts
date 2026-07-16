@@ -11,5 +11,6 @@ export {
   searchPlatforms,
   getPlatformDetails,
   getAllPlatforms,
+  getPlatformGameCounts,
 } from "./platforms";
 export type { IgdbGame, IgdbPlatform, IgdbPopularGame } from "./types";

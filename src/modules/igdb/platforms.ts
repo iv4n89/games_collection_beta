@@ -44,6 +44,31 @@ export async function searchPlatforms(term: string): Promise<IgdbPlatform[]> {
   return raw.map(mapPlatform);
 }
 
+// Conteo de juegos oficiales por plataforma (mismo filtro que el listado),
+// en lotes de 10 vía multiquery para no agotar el rate limit.
+export async function getPlatformGameCounts(
+  platformIgdbIds: number[],
+): Promise<Map<number, number>> {
+  const counts = new Map<number, number>();
+  for (let i = 0; i < platformIgdbIds.length; i += 10) {
+    const batch = platformIgdbIds.slice(i, i + 10);
+    const body = batch
+      .map(
+        (id) =>
+          `query games/count "p${id}" { where platforms = (${id}) & game_type = 0 & cover != null & total_rating_count != null; };`,
+      )
+      .join("\n");
+    const raw = await igdbQuery<{ name: string; count: number }[]>(
+      "multiquery",
+      body,
+    );
+    for (const entry of raw) {
+      counts.set(Number(entry.name.slice(1)), entry.count);
+    }
+  }
+  return counts;
+}
+
 // Todas las plataformas de IGDB (para el Explorador). ~220, cabe en una query.
 export async function getAllPlatforms(): Promise<IgdbPlatform[]> {
   const body = `fields name,slug,generation,platform_type.name,platform_logo.url; where platform_logo != null; sort name asc; limit 500;`;

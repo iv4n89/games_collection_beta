@@ -5,6 +5,7 @@ export {
   getPlatformAccessories,
   getPlatformEditions,
   seedAllPlatforms,
+  ensurePlatformGameCounts,
 } from "./platforms";
 export {
   searchGamesForPlatform,

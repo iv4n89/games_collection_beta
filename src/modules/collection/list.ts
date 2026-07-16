@@ -73,9 +73,9 @@ export interface PlatformOverview {
 export async function getPlatformsOverview(
   userId: string | null,
 ): Promise<PlatformOverview[]> {
-  const platforms = await prisma.platform.findMany({
-    orderBy: { name: "asc" },
-  });
+  const platforms = (await prisma.platform.findMany()).sort((a, b) =>
+    a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+  );
   const counts = await prisma.game.groupBy({
     by: ["platformId"],
     _count: { _all: true },

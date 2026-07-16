@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { PlatformOverview } from "@/modules/collection";
 
@@ -6,7 +8,8 @@ export function PlatformModuleCard({
 }: {
   overview: PlatformOverview;
 }) {
-  const { platform, total, owned } = overview;
+  const { platform, owned } = overview;
+  const total = platform.gameCount ?? overview.total;
   const progress = total > 0 ? Math.round((owned / total) * 100) : 0;
   return (
     <Link
@@ -39,7 +42,7 @@ export function PlatformModuleCard({
       </div>
       <h3 className="text-headline-md text-on-surface mb-1">{platform.name}</h3>
       <p className="text-label-sm text-on-surface-variant mb-6">
-        {total} {total === 1 ? "juego" : "juegos"} en catálogo
+        {total} {total === 1 ? "juego" : "juegos"}
       </p>
       <div>
         <div className="flex justify-between text-label-sm mb-2">

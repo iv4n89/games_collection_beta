@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import {
@@ -15,9 +16,11 @@ import type {
   SpecialEdition,
   UserItem,
 } from "@/generated/prisma/client";
-import { setConsoleOwnership } from "./actions";
-
-const consoleButton = "text-label-md px-6 py-2 rounded-lg transition-colors";
+const toggleButton =
+  "text-label-md px-6 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const toggleActive = "bg-primary text-on-primary hover:bg-primary-fixed";
+const toggleInactive =
+  "bg-surface-variant text-on-surface hover:bg-surface-container-highest";
 
 function AccessoriesPanel({ accessories }: { accessories: Accessory[] }) {
   if (accessories.length === 0) {
@@ -93,10 +96,14 @@ function EditionsPanel({ editions }: { editions: SpecialEdition[] }) {
 
 export default async function PlatformPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { id } = await params;
+  const { view } = await searchParams;
+  const wishlistView = view === "wishlist";
   const platform = await getPlatformWithSummary(id);
   if (!platform) {
     notFound();
@@ -131,6 +138,10 @@ export default async function PlatformPage({
         : false,
     };
   });
+
+  const viewEntries = wishlistView
+    ? entries.filter((entry) => entry.status === "wishlist")
+    : entries;
 
   const accessories = await getPlatformAccessories(id);
   const editions = await getPlatformEditions(id);
@@ -172,26 +183,22 @@ export default async function PlatformPage({
                 </div>
               ) : null}
             </div>
-            {userId ? (
-              <div className="flex gap-2 shrink-0">
-                <form action={setConsoleOwnership.bind(null, id, "owned")}>
-                  <button
-                    type="submit"
-                    className={`${consoleButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                  >
-                    Añadir a Colección
-                  </button>
-                </form>
-                <form action={setConsoleOwnership.bind(null, id, "wishlist")}>
-                  <button
-                    type="submit"
-                    className={`${consoleButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                  >
-                    Deseo
-                  </button>
-                </form>
-              </div>
-            ) : null}
+            <div className="flex gap-2 shrink-0">
+              <Link
+                href={`/platforms/${id}`}
+                aria-current={!wishlistView ? "page" : undefined}
+                className={`${toggleButton} ${!wishlistView ? toggleActive : toggleInactive}`}
+              >
+                Añadir a Colección
+              </Link>
+              <Link
+                href={`/platforms/${id}?view=wishlist`}
+                aria-current={wishlistView ? "page" : undefined}
+                className={`${toggleButton} ${wishlistView ? toggleActive : toggleInactive}`}
+              >
+                Deseo
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -203,7 +210,15 @@ export default async function PlatformPage({
               Aún no hay juegos para esta plataforma.
             </p>
           ) : (
-            <GamesBrowser entries={entries} platformName={platform.name} />
+            <GamesBrowser
+              entries={viewEntries}
+              platformName={platform.name}
+              emptyMessage={
+                wishlistView
+                  ? "No tienes juegos en la lista de deseos para esta plataforma."
+                  : undefined
+              }
+            />
           )
         }
         accesorios={<AccessoriesPanel accessories={accessories} />}

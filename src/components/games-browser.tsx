@@ -79,9 +79,11 @@ function StatusBadge({ status }: { status: GameEntry["status"] }) {
 export function GamesBrowser({
   entries,
   platformName,
+  emptyMessage = "No hay juegos que coincidan.",
 }: {
   entries: GameEntry[];
   platformName: string;
+  emptyMessage?: string;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("todos");
@@ -133,9 +135,7 @@ export function GamesBrowser({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-body-md text-on-surface-variant">
-          No hay juegos que coincidan.
-        </p>
+        <p className="text-body-md text-on-surface-variant">{emptyMessage}</p>
       ) : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
           {visible.map((entry) => (

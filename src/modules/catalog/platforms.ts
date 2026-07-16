@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import {
   searchPlatforms as searchIgdbPlatforms,
-  getPlatformSummary,
+  getPlatformDetails,
 } from "@/modules/igdb";
 import type { Accessory, Platform, SpecialEdition } from "@/generated/prisma/client";
 
@@ -13,14 +13,24 @@ export async function getPlatformWithSummary(
   id: string,
 ): Promise<Platform | null> {
   const platform = await prisma.platform.findUnique({ where: { id } });
-  if (!platform || platform.summary !== null || platform.igdbId === null) {
+  if (
+    !platform ||
+    platform.igdbId === null ||
+    (platform.summary !== null && platform.category !== null)
+  ) {
     return platform;
   }
-  const summary = await getPlatformSummary(platform.igdbId);
-  if (!summary) {
+  const details = await getPlatformDetails(platform.igdbId);
+  if (!details.summary && !details.category) {
     return platform;
   }
-  return prisma.platform.update({ where: { id }, data: { summary } });
+  return prisma.platform.update({
+    where: { id },
+    data: {
+      summary: platform.summary ?? details.summary ?? null,
+      category: platform.category ?? details.category ?? null,
+    },
+  });
 }
 
 export function getPlatformAccessories(
@@ -59,6 +69,7 @@ export async function searchPlatforms(term: string): Promise<Platform[]> {
           generation: platform.generation,
           imageUrl: platform.logoUrl,
           summary: platform.summary,
+          category: platform.category,
           source: "igdb",
         },
         update: {
@@ -67,6 +78,7 @@ export async function searchPlatforms(term: string): Promise<Platform[]> {
           generation: platform.generation,
           imageUrl: platform.logoUrl,
           summary: platform.summary,
+          category: platform.category,
         },
       }),
     ),

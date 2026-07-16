@@ -3,5 +3,5 @@ export {
   getPopularGames,
   getPopularGamesForPlatform,
 } from "./games";
-export { searchPlatforms, getPlatformSummary } from "./platforms";
+export { searchPlatforms, getPlatformDetails } from "./platforms";
 export type { IgdbGame, IgdbPlatform, IgdbPopularGame } from "./types";

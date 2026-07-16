@@ -15,6 +15,7 @@ export interface IgdbPlatform {
   generation?: number;
   logoUrl?: string;
   summary?: string;
+  category?: string;
 }
 
 export interface IgdbPopularGame {

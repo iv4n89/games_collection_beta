@@ -72,6 +72,7 @@ model Platform {
   generation  Int?
   imageUrl    String?
   summary     String?
+  category    String?
   source      ItemSource  @default(igdb)
   games       Game[]
   accessories Accessory[]

@@ -137,72 +137,63 @@ export default async function PlatformPage({
 
   return (
     <div className="max-w-[1440px] mx-auto pt-stack-md">
-      <section className="relative rounded-xl overflow-hidden bg-surface-container-low ambient-shadow border border-white/5 min-h-64 md:min-h-80 flex flex-col justify-end p-grid-gutter">
+      <section className="relative rounded-xl overflow-hidden bg-surface-container-low ambient-shadow border border-white/5 h-72 md:h-80">
         {platform.imageUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={platform.imageUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-30"
+              className="absolute inset-y-0 right-0 h-full w-2/3 object-contain object-right p-8 opacity-30"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-surface-container-lowest via-surface-container-lowest/90 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent" />
           </>
         ) : null}
-        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
-          <div className="flex items-center gap-4 max-w-3xl">
-            {platform.imageUrl ? (
-              <div className="w-20 h-20 shrink-0 rounded-lg bg-surface border border-white/10 flex items-center justify-center overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={platform.imageUrl}
-                  alt={platform.name}
-                  className="w-full h-full object-contain p-2"
-                />
-              </div>
-            ) : null}
-            <div>
-              {platform.generation ? (
+        <div className="absolute bottom-0 left-0 w-full p-grid-gutter">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
+            <div className="max-w-2xl">
+              {platform.category ?? platform.generation ? (
                 <span className="inline-block px-2 py-1 bg-surface-variant text-on-surface text-label-sm rounded mb-2 border border-white/10 uppercase tracking-widest">
-                  Gen {platform.generation}
+                  {platform.category ?? `Gen ${platform.generation}`}
                 </span>
               ) : null}
-              <h1 className="text-headline-lg md:text-display-lg text-on-surface leading-tight">
+              <h1 className="text-headline-lg md:text-display-lg text-on-surface leading-tight mb-2">
                 {platform.name}
               </h1>
+              {platform.summary ? (
+                <p className="text-body-md text-on-surface-variant leading-relaxed line-clamp-2 md:line-clamp-3">
+                  {platform.summary}
+                </p>
+              ) : null}
               {userId ? (
                 <div className="mt-2">
                   <ItemStatus item={consoleItem} />
                 </div>
               ) : null}
             </div>
+            {userId ? (
+              <div className="flex gap-2 shrink-0">
+                <form action={setConsoleOwnership.bind(null, id, "owned")}>
+                  <button
+                    type="submit"
+                    className={`${consoleButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+                  >
+                    Añadir a Colección
+                  </button>
+                </form>
+                <form action={setConsoleOwnership.bind(null, id, "wishlist")}>
+                  <button
+                    type="submit"
+                    className={`${consoleButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+                  >
+                    Deseo
+                  </button>
+                </form>
+              </div>
+            ) : null}
           </div>
-          {userId ? (
-            <div className="flex gap-2 shrink-0">
-              <form action={setConsoleOwnership.bind(null, id, "owned")}>
-                <button
-                  type="submit"
-                  className={`${consoleButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                >
-                  Tengo
-                </button>
-              </form>
-              <form action={setConsoleOwnership.bind(null, id, "wishlist")}>
-                <button
-                  type="submit"
-                  className={`${consoleButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                >
-                  Deseo
-                </button>
-              </form>
-            </div>
-          ) : null}
         </div>
-        {platform.summary ? (
-          <p className="relative mt-stack-sm text-body-md text-on-surface-variant max-w-2xl leading-relaxed line-clamp-3">
-            {platform.summary}
-          </p>
-        ) : null}
       </section>
 
       <PlatformTabs

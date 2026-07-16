@@ -1,5 +1,58 @@
 import { prisma } from "@/lib/db";
 import type { Game, Platform, UserItem } from "@/generated/prisma/client";
+import { isComplete } from "./completeness";
+
+export interface GameEntry {
+  id: string;
+  name: string;
+  coverUrl: string | null;
+  year: number | null;
+  status: "owned" | "wishlist" | null;
+  complete: boolean;
+  onlyCartridge: boolean;
+}
+
+export async function buildGameEntries(
+  userId: string | null,
+  games: Game[],
+): Promise<GameEntry[]> {
+  const items = userId
+    ? await getGameItems(
+        userId,
+        games.map((game) => game.id),
+      )
+    : new Map<string, UserItem>();
+  return games.map((game) => {
+    const item = items.get(game.id) ?? null;
+    const owned = item?.ownership === "owned";
+    return {
+      id: game.id,
+      name: game.name,
+      coverUrl: game.coverUrl,
+      year: game.releaseDate ? game.releaseDate.getFullYear() : null,
+      status: item ? item.ownership : null,
+      complete: owned ? isComplete(item) : false,
+      onlyCartridge: owned
+        ? item.hasGame === true && !item.hasBox && !item.hasManual
+        : false,
+    };
+  });
+}
+
+export async function getPlatformWishlistGames(
+  userId: string,
+  platformId: string,
+): Promise<GameEntry[]> {
+  const items = await prisma.userItem.findMany({
+    where: { userId, itemType: "game", ownership: "wishlist" },
+    select: { catalogRefId: true },
+  });
+  const games = await prisma.game.findMany({
+    where: { id: { in: items.map((item) => item.catalogRefId) }, platformId },
+    orderBy: { name: "asc" },
+  });
+  return buildGameEntries(userId, games);
+}
 
 export interface PlatformCollection {
   console: UserItem | null;

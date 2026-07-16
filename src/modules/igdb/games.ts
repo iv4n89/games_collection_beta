@@ -46,6 +46,35 @@ export async function getPopularGamesForPlatform(
   return raw.map(mapGame);
 }
 
+export type GameSort = "name_asc" | "name_desc" | "year_desc" | "year_asc";
+
+const SORT_CLAUSES: Record<GameSort, string> = {
+  name_asc: "sort name asc;",
+  name_desc: "sort name desc;",
+  year_desc: "sort first_release_date desc;",
+  year_asc: "sort first_release_date asc;",
+};
+
+// Juegos oficiales (game_type = 0 = Main Game) de una plataforma, paginados.
+export async function getOfficialPlatformGames(
+  platformIgdbId: number,
+  { offset, limit, sort }: { offset: number; limit: number; sort: GameSort },
+): Promise<IgdbGame[]> {
+  const body = `fields name,slug,summary,first_release_date,cover.url,platforms; where platforms = (${platformIgdbId}) & game_type = 0 & cover != null & total_rating_count != null; ${SORT_CLAUSES[sort]} limit ${limit}; offset ${offset};`;
+  const raw = await igdbQuery<RawGame[]>("games", body);
+  return raw.map(mapGame);
+}
+
+export async function searchOfficialPlatformGames(
+  platformIgdbId: number,
+  term: string,
+  limit: number,
+): Promise<IgdbGame[]> {
+  const body = `search "${escapeSearchTerm(term)}"; fields name,slug,summary,first_release_date,cover.url,platforms; where platforms = (${platformIgdbId}) & game_type = 0 & cover != null & total_rating_count != null; limit ${limit};`;
+  const raw = await igdbQuery<RawGame[]>("games", body);
+  return raw.map(mapGame);
+}
+
 export async function getPopularGames(
   limit: number,
 ): Promise<IgdbPopularGame[]> {

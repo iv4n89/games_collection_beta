@@ -4,10 +4,12 @@ export {
   getPlatformWithSummary,
   getPlatformAccessories,
   getPlatformEditions,
+  seedAllPlatforms,
 } from "./platforms";
 export {
   searchGamesForPlatform,
   getShowcaseGames,
   getGame,
-  getPlatformGames,
+  getPlatformGamesPage,
+  searchPlatformGames,
 } from "./games";

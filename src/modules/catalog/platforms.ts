@@ -2,8 +2,36 @@ import { prisma } from "@/lib/db";
 import {
   searchPlatforms as searchIgdbPlatforms,
   getPlatformDetails,
+  getAllPlatforms,
 } from "@/modules/igdb";
 import type { Accessory, Platform, SpecialEdition } from "@/generated/prisma/client";
+
+export async function seedAllPlatforms(): Promise<void> {
+  const platforms = await getAllPlatforms();
+  await Promise.all(
+    platforms.map((platform) =>
+      prisma.platform.upsert({
+        where: { igdbId: platform.igdbId },
+        create: {
+          igdbId: platform.igdbId,
+          name: platform.name,
+          slug: platform.slug,
+          generation: platform.generation,
+          imageUrl: platform.logoUrl,
+          category: platform.category,
+          source: "igdb",
+        },
+        update: {
+          name: platform.name,
+          slug: platform.slug,
+          generation: platform.generation,
+          imageUrl: platform.logoUrl,
+          category: platform.category,
+        },
+      }),
+    ),
+  );
+}
 
 export function getPlatform(id: string): Promise<Platform | null> {
   return prisma.platform.findUnique({ where: { id } });

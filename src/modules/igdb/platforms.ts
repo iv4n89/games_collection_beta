@@ -44,6 +44,13 @@ export async function searchPlatforms(term: string): Promise<IgdbPlatform[]> {
   return raw.map(mapPlatform);
 }
 
+// Todas las plataformas de IGDB (para el Explorador). ~220, cabe en una query.
+export async function getAllPlatforms(): Promise<IgdbPlatform[]> {
+  const body = `fields name,slug,generation,platform_type.name,platform_logo.url; where platform_logo != null; sort name asc; limit 500;`;
+  const raw = await igdbQuery<RawPlatform[]>("platforms", body);
+  return raw.map(mapPlatform);
+}
+
 export async function getPlatformDetails(
   igdbId: number,
 ): Promise<{ summary?: string; category?: string }> {

@@ -3,20 +3,25 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import {
   getPlatformWithSummary,
-  getPlatformGames,
+  getPlatformGamesPage,
   getPlatformAccessories,
   getPlatformEditions,
 } from "@/modules/catalog";
-import { getConsoleItem, getGameItems, isComplete } from "@/modules/collection";
+import {
+  getConsoleItem,
+  buildGameEntries,
+  getPlatformWishlistGames,
+} from "@/modules/collection";
 import { ItemStatus } from "@/components/item-status";
 import { PlatformTabs } from "@/components/platform-tabs";
-import { GamesBrowser, type GameEntry } from "@/components/games-browser";
+import { PlatformGamesBrowser } from "@/components/platform-games-browser";
+import { GameEntryCard } from "@/components/game-entry-card";
 import { InfiniteGrid } from "@/components/infinite-grid";
-import type {
-  Accessory,
-  SpecialEdition,
-  UserItem,
-} from "@/generated/prisma/client";
+import type { Accessory, SpecialEdition } from "@/generated/prisma/client";
+import { loadPlatformGames, searchPlatformGamesAction } from "./actions";
+
+const GAMES_PAGE = 24;
+
 const toggleButton =
   "text-label-md px-6 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 const toggleActive = "bg-primary text-on-primary hover:bg-primary-fixed";
@@ -112,37 +117,20 @@ export default async function PlatformPage({
 
   const session = await auth();
   const userId = session?.user?.id ?? null;
+  const consoleItem = userId ? await getConsoleItem(userId, id) : null;
 
-  const games = await getPlatformGames(id);
-  let consoleItem: UserItem | null = null;
-  let gameItems: Map<string, UserItem> = new Map();
-  if (userId) {
-    consoleItem = await getConsoleItem(userId, id);
-    gameItems = await getGameItems(
-      userId,
-      games.map((game) => game.id),
-    );
-  }
-
-  const entries: GameEntry[] = games.map((game) => {
-    const item = gameItems.get(game.id) ?? null;
-    const owned = item?.ownership === "owned";
-    return {
-      id: game.id,
-      name: game.name,
-      coverUrl: game.coverUrl,
-      year: game.releaseDate ? game.releaseDate.getFullYear() : null,
-      status: item ? item.ownership : null,
-      complete: owned ? isComplete(item!) : false,
-      onlyCartridge: owned
-        ? item!.hasGame === true && !item!.hasBox && !item!.hasManual
-        : false,
-    };
-  });
-
-  const viewEntries = wishlistView
-    ? entries.filter((entry) => entry.status === "wishlist")
-    : entries;
+  const wishlistEntries =
+    wishlistView && userId ? await getPlatformWishlistGames(userId, id) : [];
+  const initialGames = wishlistView
+    ? []
+    : await getPlatformGamesPage(id, {
+        offset: 0,
+        limit: GAMES_PAGE,
+        sort: "name_asc",
+      });
+  const initialEntries = wishlistView
+    ? []
+    : await buildGameEntries(userId, initialGames);
 
   const accessories = await getPlatformAccessories(id);
   const editions = await getPlatformEditions(id);
@@ -206,19 +194,31 @@ export default async function PlatformPage({
 
       <PlatformTabs
         juegos={
-          games.length === 0 ? (
+          wishlistView ? (
+            wishlistEntries.length === 0 ? (
+              <p className="text-body-md text-on-surface-variant">
+                No tienes juegos en la lista de deseos para esta plataforma.
+              </p>
+            ) : (
+              <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
+                {wishlistEntries.map((entry) => (
+                  <li key={entry.id}>
+                    <GameEntryCard entry={entry} />
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : initialEntries.length === 0 ? (
             <p className="text-body-md text-on-surface-variant">
-              Aún no hay juegos para esta plataforma.
+              Aún no hay juegos oficiales para esta plataforma.
             </p>
           ) : (
-            <GamesBrowser
-              entries={viewEntries}
+            <PlatformGamesBrowser
               platformName={platform.name}
-              emptyMessage={
-                wishlistView
-                  ? "No tienes juegos en la lista de deseos para esta plataforma."
-                  : undefined
-              }
+              initialGames={initialEntries}
+              pageSize={GAMES_PAGE}
+              loadMore={loadPlatformGames.bind(null, id)}
+              search={searchPlatformGamesAction.bind(null, id)}
             />
           )
         }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
 import { getPlatform, searchGamesForPlatform } from "@/modules/catalog";
@@ -86,7 +87,12 @@ export default async function PlatformPage({
           <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
             {collection.games.map(({ item, game }) => (
               <li key={item.id}>
-                <GameCard game={game} item={item} />
+                <Link
+                  href={`/games/${game.id}`}
+                  className="block rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                >
+                  <GameCard game={game} item={item} />
+                </Link>
               </li>
             ))}
           </ul>

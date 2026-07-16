@@ -61,7 +61,7 @@ export function HeroCarousel({ games }: { games: Game[] }) {
           <Link
             key={game.id}
             data-slide
-            href={`/platforms/${game.platformId}`}
+            href={`/games/${game.id}`}
             className="group relative shrink-0 snap-center min-w-[85%] md:min-w-[600px] h-[300px] md:h-[400px] rounded-xl overflow-hidden bg-surface-container ambient-shadow border border-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {game.coverUrl ? (

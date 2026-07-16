@@ -5,6 +5,10 @@ import {
 } from "@/modules/igdb";
 import type { Game } from "@/generated/prisma/client";
 
+export function getGame(id: string): Promise<Game | null> {
+  return prisma.game.findUnique({ where: { id } });
+}
+
 export async function getShowcaseGames(limit: number): Promise<Game[]> {
   const local = await randomLocalGames(limit);
   if (local.length >= limit) {

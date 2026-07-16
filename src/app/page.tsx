@@ -64,7 +64,7 @@ export default async function Home({
             {gridGames.map((game) => (
               <li key={game.id}>
                 <Link
-                  href={`/platforms/${game.platformId}`}
+                  href={`/games/${game.id}`}
                   className="block rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                 >
                   <GameCard game={game} item={gameItems.get(game.id) ?? null} />

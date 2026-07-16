@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { auth } from "@/auth";
 import { getUserPlatforms } from "@/modules/collection";
 import { searchPlatforms } from "@/modules/catalog";
 import { SearchForm } from "@/components/search-form";
+import { PlatformCard } from "@/components/platform-card";
 import { addConsoleToCollection } from "./actions";
 
 export default async function Home({
@@ -13,11 +13,11 @@ export default async function Home({
   const session = await auth();
   if (!session?.user?.id) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-6 py-16">
-        <p className="text-sm text-stone-600">
+      <div className="max-w-3xl mx-auto pt-stack-lg">
+        <p className="text-body-md text-on-surface-variant">
           Entra con GitHub para gestionar tu colección.
         </p>
-      </main>
+      </div>
     );
   }
 
@@ -26,56 +26,46 @@ export default async function Home({
   const results = q ? await searchPlatforms(q) : [];
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <h1 className="text-lg font-semibold tracking-tight">Tus consolas</h1>
-      {platforms.length === 0 ? (
-        <p className="mt-2 text-sm text-stone-500">
-          Aún no has añadido consolas.
-        </p>
-      ) : (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {platforms.map(({ item, platform }) => (
-            <li key={item.id}>
-              <Link
-                href={`/platforms/${platform.id}`}
-                className="block rounded-md border border-stone-200 bg-white p-4 hover:border-stone-400"
-              >
-                <span className="text-sm font-medium">{platform.name}</span>
-                {platform.generation ? (
-                  <span className="ml-2 text-xs text-stone-400">
-                    Gen {platform.generation}
-                  </span>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="max-w-[1440px] mx-auto pt-stack-md">
+      <section className="mb-stack-lg">
+        <h2 className="text-headline-md text-on-surface mb-stack-md flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary" aria-hidden="true">
+            videogame_asset
+          </span>
+          Tus consolas
+        </h2>
+        {platforms.length === 0 ? (
+          <p className="text-body-md text-on-surface-variant">
+            Aún no has añadido consolas. Busca una abajo para empezar.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {platforms.map(({ item, platform }) => (
+              <PlatformCard key={item.id} platform={platform} />
+            ))}
+          </div>
+        )}
+      </section>
 
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold">Añadir consola</h2>
-        <div className="mt-3">
-          <SearchForm
-            action="/"
-            placeholder="Buscar consola (p. ej. Super Nintendo)"
-            defaultValue={q}
-          />
-        </div>
+      <section className="mb-stack-lg">
+        <h2 className="text-headline-md text-on-surface mb-stack-md">Añadir consola</h2>
+        <SearchForm
+          action="/"
+          placeholder="Buscar consola (p. ej. Super Nintendo)"
+          defaultValue={q}
+        />
         {q ? (
-          <ul className="mt-4 divide-y divide-stone-200 rounded-md border border-stone-200 bg-white">
+          <ul className="mt-stack-md rounded-xl border border-surface-container-high bg-surface-container-low divide-y divide-surface-container-high">
             {results.length === 0 ? (
-              <li className="p-3 text-sm text-stone-500">Sin resultados.</li>
+              <li className="p-4 text-body-md text-on-surface-variant">Sin resultados.</li>
             ) : (
               results.map((platform) => (
-                <li
-                  key={platform.id}
-                  className="flex items-center justify-between p-3"
-                >
-                  <span className="text-sm">{platform.name}</span>
+                <li key={platform.id} className="flex items-center justify-between p-4">
+                  <span className="text-body-md">{platform.name}</span>
                   <form action={addConsoleToCollection.bind(null, platform.id)}>
                     <button
                       type="submit"
-                      className="rounded border border-stone-300 px-3 py-1 text-xs hover:bg-stone-100"
+                      className="bg-primary text-on-primary text-label-md px-4 py-1.5 rounded-lg hover:bg-primary-fixed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       Añadir
                     </button>
@@ -86,6 +76,6 @@ export default async function Home({
           </ul>
         ) : null}
       </section>
-    </main>
+    </div>
   );
 }

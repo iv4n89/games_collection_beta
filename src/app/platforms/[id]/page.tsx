@@ -11,6 +11,7 @@ import { getConsoleItem, getGameItems, isComplete } from "@/modules/collection";
 import { ItemStatus } from "@/components/item-status";
 import { PlatformTabs } from "@/components/platform-tabs";
 import { GamesBrowser, type GameEntry } from "@/components/games-browser";
+import { InfiniteGrid } from "@/components/infinite-grid";
 import type {
   Accessory,
   SpecialEdition,
@@ -31,7 +32,7 @@ function AccessoriesPanel({ accessories }: { accessories: Accessory[] }) {
     );
   }
   return (
-    <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-grid-gutter">
+    <InfiniteGrid className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-grid-gutter">
       {accessories.map((accessory) => (
         <li
           key={accessory.id}
@@ -54,7 +55,7 @@ function AccessoriesPanel({ accessories }: { accessories: Accessory[] }) {
           <span className="text-label-md text-on-surface">{accessory.name}</span>
         </li>
       ))}
-    </ul>
+    </InfiniteGrid>
   );
 }
 

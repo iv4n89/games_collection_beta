@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getPlatformsOverview } from "@/modules/collection";
 import { PlatformModuleCard } from "@/components/platform-module-card";
+import { InfiniteGrid } from "@/components/infinite-grid";
 
 export default async function ExplorePage() {
   const session = await auth();
@@ -20,14 +21,13 @@ export default async function ExplorePage() {
           Aún no hay plataformas en el catálogo. Busca una consola desde Inicio.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-grid-gutter">
+        <InfiniteGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-grid-gutter">
           {overviews.map((overview) => (
-            <PlatformModuleCard
-              key={overview.platform.id}
-              overview={overview}
-            />
+            <li key={overview.platform.id}>
+              <PlatformModuleCard overview={overview} />
+            </li>
           ))}
-        </div>
+        </InfiniteGrid>
       )}
     </div>
   );

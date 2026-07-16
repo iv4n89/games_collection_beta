@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useInfiniteScroll } from "./use-infinite-scroll";
 
 export interface GameEntry {
   id: string;
@@ -90,6 +91,7 @@ export function GamesBrowser({
       matches(entry, filter) &&
       (q === "" || entry.name.toLowerCase().includes(q)),
   );
+  const { count, sentinelRef } = useInfiniteScroll(visible.length);
 
   return (
     <div>
@@ -135,7 +137,7 @@ export function GamesBrowser({
         <p className="text-body-md text-on-surface-variant">{emptyMessage}</p>
       ) : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
-          {visible.map((entry) => (
+          {visible.slice(0, count).map((entry) => (
             <li key={entry.id}>
               <Link
                 href={`/games/${entry.id}`}
@@ -172,6 +174,9 @@ export function GamesBrowser({
           ))}
         </ul>
       )}
+      {count < visible.length ? (
+        <div ref={sentinelRef} aria-hidden="true" className="h-px" />
+      ) : null}
     </div>
   );
 }

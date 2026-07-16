@@ -17,7 +17,7 @@ export default async function RootLayout({
   const user = session?.user ?? null;
 
   return (
-    <html lang="es" className="dark">
+    <html lang="es">
       <body className="bg-background text-on-surface min-h-screen flex antialiased">
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"

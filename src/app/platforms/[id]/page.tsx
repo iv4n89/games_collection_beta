@@ -38,7 +38,7 @@ export default async function PlatformPage({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={platform.imageUrl}
-                alt={platform.name}
+                alt=""
                 className="absolute inset-0 w-full h-full object-cover opacity-60"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent" />

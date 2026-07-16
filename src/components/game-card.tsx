@@ -6,6 +6,8 @@ function StatusBadge({ item }: { item: UserItem }) {
     return (
       <div
         className="absolute top-3 right-3 bg-error-container/90 backdrop-blur-sm text-error p-1.5 rounded-full border border-error/20"
+        role="img"
+        aria-label="En lista de deseos"
         title="En lista de deseos"
       >
         <span
@@ -22,6 +24,8 @@ function StatusBadge({ item }: { item: UserItem }) {
   return (
     <div
       className="absolute top-3 right-3 bg-secondary-container/90 backdrop-blur-sm text-secondary-fixed-dim p-1.5 rounded-full border border-secondary/20"
+      role="img"
+      aria-label={complete ? "Completo" : "En colección"}
       title={complete ? "Completo" : "En colección"}
     >
       <span

@@ -1,9 +1,44 @@
 import { prisma } from "@/lib/db";
-import { searchPlatforms as searchIgdbPlatforms } from "@/modules/igdb";
-import type { Platform } from "@/generated/prisma/client";
+import {
+  searchPlatforms as searchIgdbPlatforms,
+  getPlatformSummary,
+} from "@/modules/igdb";
+import type { Accessory, Platform, SpecialEdition } from "@/generated/prisma/client";
 
 export function getPlatform(id: string): Promise<Platform | null> {
   return prisma.platform.findUnique({ where: { id } });
+}
+
+export async function getPlatformWithSummary(
+  id: string,
+): Promise<Platform | null> {
+  const platform = await prisma.platform.findUnique({ where: { id } });
+  if (!platform || platform.summary !== null || platform.igdbId === null) {
+    return platform;
+  }
+  const summary = await getPlatformSummary(platform.igdbId);
+  if (!summary) {
+    return platform;
+  }
+  return prisma.platform.update({ where: { id }, data: { summary } });
+}
+
+export function getPlatformAccessories(
+  platformId: string,
+): Promise<Accessory[]> {
+  return prisma.accessory.findMany({
+    where: { platformId },
+    orderBy: { name: "asc" },
+  });
+}
+
+export function getPlatformEditions(
+  platformId: string,
+): Promise<SpecialEdition[]> {
+  return prisma.specialEdition.findMany({
+    where: { baseType: "platform", baseId: platformId },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function searchPlatforms(term: string): Promise<Platform[]> {
@@ -23,6 +58,7 @@ export async function searchPlatforms(term: string): Promise<Platform[]> {
           slug: platform.slug,
           generation: platform.generation,
           imageUrl: platform.logoUrl,
+          summary: platform.summary,
           source: "igdb",
         },
         update: {
@@ -30,6 +66,7 @@ export async function searchPlatforms(term: string): Promise<Platform[]> {
           slug: platform.slug,
           generation: platform.generation,
           imageUrl: platform.logoUrl,
+          summary: platform.summary,
         },
       }),
     ),

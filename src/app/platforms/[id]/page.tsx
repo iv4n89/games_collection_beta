@@ -1,30 +1,103 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import {
-  getPlatform,
+  getPlatformWithSummary,
   getPlatformGames,
-  searchGamesForPlatform,
+  getPlatformAccessories,
+  getPlatformEditions,
 } from "@/modules/catalog";
-import { getPlatformCollection, getGameItems } from "@/modules/collection";
-import { SearchForm } from "@/components/search-form";
+import { getPlatformCollection, getGameItems, isComplete } from "@/modules/collection";
 import { ItemStatus } from "@/components/item-status";
-import { GameCard } from "@/components/game-card";
-import type { UserItem } from "@/generated/prisma/client";
-import { addGameToCollection, setConsoleOwnership } from "./actions";
+import { PlatformTabs } from "@/components/platform-tabs";
+import { GamesBrowser, type GameEntry } from "@/components/games-browser";
+import type {
+  Accessory,
+  SpecialEdition,
+  UserItem,
+} from "@/generated/prisma/client";
+import { setConsoleOwnership } from "./actions";
 
-const ownershipButton = "text-label-md px-5 py-2 rounded-lg transition-colors";
-const addButton = "text-label-md px-4 py-1.5 rounded-lg transition-colors";
+const consoleButton = "text-label-md px-6 py-2 rounded-lg transition-colors";
+
+function AccessoriesPanel({ accessories }: { accessories: Accessory[] }) {
+  if (accessories.length === 0) {
+    return (
+      <p className="text-body-md text-on-surface-variant">
+        Aún no hay accesorios registrados para esta plataforma.
+      </p>
+    );
+  }
+  return (
+    <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-grid-gutter">
+      {accessories.map((accessory) => (
+        <li
+          key={accessory.id}
+          className="bg-surface-container-low rounded-xl border border-white/5 p-4 flex flex-col items-center gap-3 text-center"
+        >
+          <div className="w-16 h-16 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden text-on-surface-variant">
+            {accessory.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={accessory.imageUrl}
+                alt=""
+                className="w-full h-full object-contain p-1"
+              />
+            ) : (
+              <span className="material-symbols-outlined" aria-hidden="true">
+                stadia_controller
+              </span>
+            )}
+          </div>
+          <span className="text-label-md text-on-surface">{accessory.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function EditionsPanel({ editions }: { editions: SpecialEdition[] }) {
+  if (editions.length === 0) {
+    return (
+      <p className="text-body-md text-on-surface-variant">
+        Aún no hay ediciones de consola registradas para esta plataforma.
+      </p>
+    );
+  }
+  return (
+    <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-grid-gutter">
+      {editions.map((edition) => (
+        <li
+          key={edition.id}
+          className="bg-surface-container-low rounded-xl border border-white/5 p-4 flex flex-col items-center gap-3 text-center"
+        >
+          <div className="w-16 h-16 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden text-on-surface-variant">
+            {edition.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={edition.imageUrl}
+                alt=""
+                className="w-full h-full object-contain p-1"
+              />
+            ) : (
+              <span className="material-symbols-outlined" aria-hidden="true">
+                stars
+              </span>
+            )}
+          </div>
+          <span className="text-label-md text-on-surface">{edition.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default async function PlatformPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string }>;
 }) {
   const { id } = await params;
-  const platform = await getPlatform(id);
+  const platform = await getPlatformWithSummary(id);
   if (!platform) {
     notFound();
   }
@@ -43,21 +116,47 @@ export default async function PlatformPage({
     );
   }
 
-  const { q } = await searchParams;
-  const results = userId && q ? await searchGamesForPlatform(id, q) : [];
-  const collectedGameIds = new Set(gameItems.keys());
+  const entries: GameEntry[] = games.map((game) => {
+    const item = gameItems.get(game.id) ?? null;
+    const owned = item?.ownership === "owned";
+    return {
+      id: game.id,
+      name: game.name,
+      coverUrl: game.coverUrl,
+      year: game.releaseDate ? game.releaseDate.getFullYear() : null,
+      status: item ? item.ownership : null,
+      complete: owned ? isComplete(item!) : false,
+      onlyCartridge: owned
+        ? item!.hasGame === true && !item!.hasBox && !item!.hasManual
+        : false,
+    };
+  });
+
+  const accessories = await getPlatformAccessories(id);
+  const editions = await getPlatformEditions(id);
 
   return (
     <div className="max-w-[1440px] mx-auto pt-stack-md">
-      <section className="rounded-xl bg-surface-container-low ambient-shadow border border-white/5 p-grid-gutter">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
-          <div className="flex items-center gap-4">
+      <section className="relative rounded-xl overflow-hidden bg-surface-container-low ambient-shadow border border-white/5 min-h-64 md:min-h-80 flex flex-col justify-end p-grid-gutter">
+        {platform.imageUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={platform.imageUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent" />
+          </>
+        ) : null}
+        <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
+          <div className="flex items-center gap-4 max-w-3xl">
             {platform.imageUrl ? (
-              <div className="w-16 h-16 shrink-0 rounded-lg bg-surface border border-white/10 flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-20 shrink-0 rounded-lg bg-surface border border-white/10 flex items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={platform.imageUrl}
-                  alt=""
+                  alt={platform.name}
                   className="w-full h-full object-contain p-2"
                 />
               </div>
@@ -68,7 +167,7 @@ export default async function PlatformPage({
                   Gen {platform.generation}
                 </span>
               ) : null}
-              <h1 className="text-display-lg text-on-surface leading-tight">
+              <h1 className="text-headline-lg md:text-display-lg text-on-surface leading-tight">
                 {platform.name}
               </h1>
               {userId ? (
@@ -79,11 +178,11 @@ export default async function PlatformPage({
             </div>
           </div>
           {userId ? (
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <form action={setConsoleOwnership.bind(null, id, "owned")}>
                 <button
                   type="submit"
-                  className={`${ownershipButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+                  className={`${consoleButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
                 >
                   Tengo
                 </button>
@@ -91,7 +190,7 @@ export default async function PlatformPage({
               <form action={setConsoleOwnership.bind(null, id, "wishlist")}>
                 <button
                   type="submit"
-                  className={`${ownershipButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+                  className={`${consoleButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
                 >
                   Deseo
                 </button>
@@ -99,99 +198,26 @@ export default async function PlatformPage({
             </div>
           ) : null}
         </div>
-      </section>
-
-      <section className="mt-stack-lg">
-        <h2 className="text-headline-md text-on-surface mb-stack-md">Juegos</h2>
-        {games.length === 0 ? (
-          <p className="text-body-md text-on-surface-variant">
-            Aún no hay juegos para esta plataforma.
+        {platform.summary ? (
+          <p className="relative mt-stack-sm text-body-md text-on-surface-variant max-w-2xl leading-relaxed line-clamp-3">
+            {platform.summary}
           </p>
-        ) : (
-          <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-grid-gutter">
-            {games.map((game) => (
-              <li key={game.id}>
-                <Link
-                  href={`/games/${game.id}`}
-                  className="block rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                >
-                  <GameCard game={game} item={gameItems.get(game.id) ?? null} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        ) : null}
       </section>
 
-      {userId ? (
-        <section className="mt-stack-lg">
-          <h2 className="text-headline-md text-on-surface mb-stack-md">
-            Añadir juegos
-          </h2>
-          <SearchForm
-            action={`/platforms/${id}`}
-            placeholder="Buscar juego"
-            defaultValue={q}
-          />
-          {q ? (
-            <ul className="mt-stack-md rounded-xl border border-surface-container-high bg-surface-container-low divide-y divide-surface-container-high">
-              {results.length === 0 ? (
-                <li className="p-4 text-body-md text-on-surface-variant">
-                  Sin resultados.
-                </li>
-              ) : (
-                results.map((game) => (
-                  <li
-                    key={game.id}
-                    className="flex items-center justify-between p-4 gap-3"
-                  >
-                    <span className="text-body-md">
-                      {game.name}
-                      {collectedGameIds.has(game.id) ? (
-                        <span className="ml-2 text-label-sm text-on-surface-variant">
-                          · ya en tu colección
-                        </span>
-                      ) : null}
-                    </span>
-                    <div className="flex gap-2">
-                      <form
-                        action={addGameToCollection.bind(
-                          null,
-                          id,
-                          game.id,
-                          "owned",
-                        )}
-                      >
-                        <button
-                          type="submit"
-                          className={`${addButton} bg-primary text-on-primary hover:bg-primary-fixed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                        >
-                          Tengo
-                        </button>
-                      </form>
-                      <form
-                        action={addGameToCollection.bind(
-                          null,
-                          id,
-                          game.id,
-                          "wishlist",
-                        )}
-                      >
-                        <button
-                          type="submit"
-                          className={`${addButton} bg-surface-variant text-on-surface hover:bg-surface-container-highest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                        >
-                          Deseo
-                        </button>
-                      </form>
-                    </div>
-                  </li>
-                ))
-              )}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+      <PlatformTabs
+        juegos={
+          games.length === 0 ? (
+            <p className="text-body-md text-on-surface-variant">
+              Aún no hay juegos para esta plataforma.
+            </p>
+          ) : (
+            <GamesBrowser entries={entries} platformName={platform.name} />
+          )
+        }
+        accesorios={<AccessoriesPanel accessories={accessories} />}
+        ediciones={<EditionsPanel editions={editions} />}
+      />
     </div>
   );
 }

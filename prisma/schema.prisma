@@ -71,6 +71,7 @@ model Platform {
   slug        String      @unique
   generation  Int?
   imageUrl    String?
+  summary     String?
   source      ItemSource  @default(igdb)
   games       Game[]
   accessories Accessory[]

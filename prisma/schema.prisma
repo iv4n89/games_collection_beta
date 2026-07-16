@@ -65,32 +65,32 @@ enum ItemSource {
 }
 
 model Platform {
-  id          String      @id @default(cuid())
-  igdbId      Int?        @unique
-  name        String
-  slug        String      @unique
-  generation  Int?
+  id            String      @id @default(cuid())
+  igdbId        Int?        @unique
+  name          String
+  slug          String      @unique
+  generation    Int?
   imageUrl      String?
   summary       String?
   category      String?
   enrichedAt    DateTime?
   gamesSeededAt DateTime?
   source        ItemSource  @default(igdb)
-  games       Game[]
-  accessories Accessory[]
+  games         Game[]
+  accessories   Accessory[]
 }
 
 model Game {
-  id          String      @id @default(cuid())
+  id          String     @id @default(cuid())
   igdbId      Int?
   name        String
   slug        String
   platformId  String
-  platform    Platform    @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platform    Platform   @relation(fields: [platformId], references: [id], onDelete: Cascade)
   coverUrl    String?
   releaseDate DateTime?
   summary     String?
-  source      ItemSource  @default(igdb)
+  source      ItemSource @default(igdb)
 
   @@unique([igdbId, platformId])
   @@index([platformId])
@@ -137,9 +137,9 @@ enum Ownership {
 }
 
 model UserItem {
-  id       String    @id @default(cuid())
+  id       String   @id @default(cuid())
   userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   itemType ItemType
 
   // Referencia al ítem de catálogo (el tipo es itemType; ver data-model.md).
@@ -156,8 +156,8 @@ model UserItem {
   hasCables     Boolean?
   hasAccessory  Boolean?
 
-  condition       String?
-  notes           String?
+  condition        String?
+  notes            String?
   acquisitionPrice Decimal?
   acquisitionDate  DateTime?
 

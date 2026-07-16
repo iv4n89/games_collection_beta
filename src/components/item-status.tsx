@@ -3,17 +3,19 @@ import type { UserItem } from "@/generated/prisma/client";
 
 export function ItemStatus({ item }: { item: UserItem | null }) {
   if (!item) {
-    return <span className="text-xs text-stone-400">No en tu colección</span>;
+    return (
+      <span className="text-label-sm text-on-surface-variant">
+        No en tu colección
+      </span>
+    );
   }
   if (item.ownership === "wishlist") {
-    return (
-      <span className="text-xs font-medium text-amber-700">En wishlist</span>
-    );
+    return <span className="text-label-sm text-error">En lista de deseos</span>;
   }
   const complete = isComplete(item);
   return (
     <span
-      className={`text-xs font-medium ${complete ? "text-emerald-700" : "text-stone-500"}`}
+      className={`text-label-sm ${complete ? "text-secondary" : "text-on-surface-variant"}`}
     >
       {complete ? "Completo" : "Incompleto"}
     </span>

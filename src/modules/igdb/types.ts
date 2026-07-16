@@ -14,4 +14,16 @@ export interface IgdbPlatform {
   slug: string;
   generation?: number;
   logoUrl?: string;
+  summary?: string;
+  category?: string;
+}
+
+export interface IgdbPopularGame {
+  igdbId: number;
+  name: string;
+  slug: string;
+  summary?: string;
+  releaseDate?: Date;
+  coverUrl?: string;
+  platforms: IgdbPlatform[];
 }

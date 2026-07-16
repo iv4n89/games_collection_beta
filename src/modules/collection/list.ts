@@ -11,6 +11,54 @@ export interface UserPlatform {
   platform: Platform;
 }
 
+export interface PlatformOverview {
+  platform: Platform;
+  total: number;
+  owned: number;
+}
+
+export async function getPlatformsOverview(
+  userId: string | null,
+): Promise<PlatformOverview[]> {
+  const platforms = await prisma.platform.findMany({
+    orderBy: { name: "asc" },
+  });
+  const counts = await prisma.game.groupBy({
+    by: ["platformId"],
+    _count: { _all: true },
+  });
+  const totalByPlatform = new Map(
+    counts.map((count) => [count.platformId, count._count._all]),
+  );
+
+  const ownedByPlatform = new Map<string, number>();
+  if (userId) {
+    const ownedItems = await prisma.userItem.findMany({
+      where: { userId, itemType: "game", ownership: "owned" },
+      select: { catalogRefId: true },
+    });
+    const ownedGameIds = ownedItems.map((item) => item.catalogRefId);
+    if (ownedGameIds.length > 0) {
+      const ownedGames = await prisma.game.findMany({
+        where: { id: { in: ownedGameIds } },
+        select: { platformId: true },
+      });
+      for (const game of ownedGames) {
+        ownedByPlatform.set(
+          game.platformId,
+          (ownedByPlatform.get(game.platformId) ?? 0) + 1,
+        );
+      }
+    }
+  }
+
+  return platforms.map((platform) => ({
+    platform,
+    total: totalByPlatform.get(platform.id) ?? 0,
+    owned: ownedByPlatform.get(platform.id) ?? 0,
+  }));
+}
+
 export async function getUserPlatforms(
   userId: string,
 ): Promise<UserPlatform[]> {
@@ -64,4 +112,29 @@ export async function getPlatformCollection(
   });
 
   return { console: consoleItem, games: gameItems };
+}
+
+export function getConsoleItem(
+  userId: string,
+  platformId: string,
+): Promise<UserItem | null> {
+  return prisma.userItem.findUnique({
+    where: {
+      userId_itemType_catalogRefId: {
+        userId,
+        itemType: "platform",
+        catalogRefId: platformId,
+      },
+    },
+  });
+}
+
+export async function getGameItems(
+  userId: string,
+  gameIds: string[],
+): Promise<Map<string, UserItem>> {
+  const items = await prisma.userItem.findMany({
+    where: { userId, itemType: "game", catalogRefId: { in: gameIds } },
+  });
+  return new Map(items.map((item) => [item.catalogRefId, item]));
 }
